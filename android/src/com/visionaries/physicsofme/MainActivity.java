@@ -2,7 +2,17 @@ package com.visionaries.physicsofme;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -118,7 +128,133 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
+    // ---------------- polled sources: battery (electricity, heat) and Wi-Fi signal ----------------
+    private final Runnable battPoll = new Runnable() {
+        @Override
+        public void run() {
+            boolean on;
+            synchronized (active) { on = active.contains("battery"); }
+            if (!on) return;
+            Intent b = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            BatteryManager bm = (BatteryManager) getSystemService(BATTERY_SERVICE);
+            double t = SystemClock.elapsedRealtimeNanos() / 1e6;
+            if (b != null && bm != null) {
+                double volts = b.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) / 1000.0;
+                double temp = b.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10.0;
+                int level = b.getIntExtra(BatteryManager.EXTRA_LEVEL, 0), scale = b.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+                int plugged = b.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
+                long current = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW); // µA on most phones, mA on a few
+                long toFull = bm.computeChargeTimeRemaining(); // ms until full, or -1 when Android cannot tell
+                push("battery", t, volts, current, temp);
+                push("battery2", t, 100.0 * level / scale, toFull, plugged);
+            }
+            ui.postDelayed(this, 500);
+        }
+    };
+
+    private final Runnable wifiPoll = new Runnable() {
+        @Override
+        public void run() {
+            boolean on;
+            synchronized (active) { on = active.contains("wifi"); }
+            if (!on) return;
+            WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+            if (wm != null) {
+                WifiInfo wi = wm.getConnectionInfo();
+                if (wi != null && wi.getRssi() > -127)
+                    push("wifi", SystemClock.elapsedRealtimeNanos() / 1e6, wi.getRssi(), wi.getLinkSpeed(), wi.getFrequency());
+            }
+            ui.postDelayed(this, 500);
+        }
+    };
+
+    // ---------------- GPS: speed and position ----------------
+    private LocationListener gpsListener;
+
+    private void beginGps() {
+        if (gpsListener != null) return;
+        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (lm == null) return;
+        gpsListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location l) {
+                double t = SystemClock.elapsedRealtimeNanos() / 1e6;
+                push("gps", t, l.hasSpeed() ? l.getSpeed() : -1, l.hasAccuracy() ? l.getAccuracy() : -1, 0);
+                push("gpsll", t, l.getLatitude(), l.getLongitude(), 0);
+            }
+            @Override public void onStatusChanged(String p, int s, Bundle e) { }
+            @Override public void onProviderEnabled(String p) { }
+            @Override public void onProviderDisabled(String p) { push("gpsoff", SystemClock.elapsedRealtimeNanos() / 1e6, 0, 0, 0); }
+        };
+        try {
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, gpsListener, Looper.getMainLooper());
+        } catch (SecurityException ex) {
+            gpsListener = null;
+        }
+    }
+
+    private void endGps() {
+        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (lm != null && gpsListener != null) lm.removeUpdates(gpsListener);
+        gpsListener = null;
+    }
+
+    private String flashCamera() {
+        try {
+            CameraManager cm = (CameraManager) getSystemService(CAMERA_SERVICE);
+            for (String id : cm.getCameraIdList()) {
+                Boolean f = cm.getCameraCharacteristics(id).get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+                if (f != null && f) return id;
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    // ---------------- echo: record a short burst and send its loudness envelope (1 ms steps) ----------------
+    private void recordEcho(final int ms) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                micOn = false; // the pitch reader must release the microphone first
+                try { Thread.sleep(150); } catch (InterruptedException ignored) { }
+                final int sr = 44100, total = sr * ms / 1000, per = sr / 1000;
+                int min = AudioRecord.getMinBufferSize(sr, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                StringBuilder sb = new StringBuilder("[");
+                try {
+                    AudioRecord rec = new AudioRecord(MediaRecorder.AudioSource.MIC, sr, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, Math.max(min, total * 2));
+                    short[] s = new short[total];
+                    rec.startRecording();
+                    int got = 0;
+                    while (got < total) { int r = rec.read(s, got, total - got); if (r <= 0) break; got += r; }
+                    rec.stop(); rec.release();
+                    for (int i = 0; i + per <= got; i += per) {
+                        int m = 0;
+                        for (int j = i; j < i + per; j++) m = Math.max(m, Math.abs((int) s[j]));
+                        if (i > 0) sb.append(',');
+                        sb.append(String.format(java.util.Locale.US, "%.4f", m / 32768.0));
+                    }
+                } catch (Exception ex) { sb.setLength(1); }
+                sb.append(']');
+                final String js = "window.__echo&&window.__echo(" + sb + ")";
+                ui.post(new Runnable() { @Override public void run() { web.evaluateJavascript(js, null); } });
+            }
+        }).start();
+    }
+
     private void register(String type) {
+        if (type.equals("battery")) { ui.removeCallbacks(battPoll); ui.post(battPoll); return; }
+        if (type.equals("wifi")) { ui.removeCallbacks(wifiPoll); ui.post(wifiPoll); return; }
+        if (type.equals("gps")) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 8);
+                    else beginGps();
+                }
+            });
+            return;
+        }
         Integer ty = types.get(type);
         if (ty == null) return;
         Sensor s = sm.getDefaultSensor(ty);
@@ -129,6 +265,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     private void unregister(String type) {
+        if (type.equals("gps")) { ui.post(new Runnable() { @Override public void run() { endGps(); } }); return; }
+        if (type.equals("battery") || type.equals("wifi")) return; // the pollers stop themselves
         Integer ty = types.get(type);
         if (ty == null) return;
         Sensor s = sm.getDefaultSensor(ty);
@@ -146,6 +284,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     protected void onPause() {
         super.onPause();
         sm.unregisterListener(this);
+        endGps();
         micOn = false;
         toneOn = false;
     }
@@ -158,9 +297,11 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     @Override
     public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
-        if (code != 7) return;
-        if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) beginMic();
-        else push("micdenied", SystemClock.elapsedRealtimeNanos() / 1e6, 0, 0, 0);
+        boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        double t = SystemClock.elapsedRealtimeNanos() / 1e6;
+        if (code == 7) { if (ok) beginMic(); else push("micdenied", t, 0, 0, 0); }
+        if (code == 8) { if (ok) beginGps(); else push("gpsdenied", t, 0, 0, 0); }
+        if (code == 9) { if (ok) push("echoready", t, 0, 0, 0); else push("micdenied", t, 0, 0, 0); }
     }
 
     // ---------------- microphone: loudness and pitch (FFT peak) ----------------
@@ -292,8 +433,14 @@ public class MainActivity extends Activity implements SensorEventListener {
             try {
                 for (Map.Entry<String, Integer> e : types.entrySet())
                     o.put(e.getKey(), sm.getDefaultSensor(e.getValue()) != null);
-                o.put("mic", getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE));
+                PackageManager pm = getPackageManager();
+                o.put("mic", pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE));
+                o.put("echo", pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE));
                 o.put("tone", true);
+                o.put("battery", true);
+                o.put("wifi", pm.hasSystemFeature(PackageManager.FEATURE_WIFI));
+                o.put("gps", pm.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS));
+                o.put("torch", flashCamera() != null);
             } catch (Exception ignored) { }
             return o.toString();
         }
@@ -339,6 +486,30 @@ public class MainActivity extends Activity implements SensorEventListener {
         @JavascriptInterface
         public void toneStop() {
             toneOn = false;
+        }
+
+        @JavascriptInterface
+        public boolean echoReady() {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) return true;
+            ui.post(new Runnable() { @Override public void run() { requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 9); } });
+            return false;
+        }
+
+        @JavascriptInterface
+        public void echo(int ms) {
+            recordEcho(Math.max(300, Math.min(ms, 3000)));
+        }
+
+        @JavascriptInterface
+        public boolean torch(boolean on) {
+            String id = flashCamera();
+            if (id == null) return false;
+            try {
+                ((CameraManager) getSystemService(CAMERA_SERVICE)).setTorchMode(id, on);
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
         }
     }
 }
