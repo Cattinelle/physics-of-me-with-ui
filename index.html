@@ -274,7 +274,7 @@ const Demo = {
       return flat();
     }
     if (sc.name === "jump" || sc.name === "drop") {
-      const air = sc.name === "jump" ? 0.53 : 0.452, start = 1.2;
+      const air = sc.name === "jump" ? 0.53 : 0.505, start = 1.2;
       if (sc.name === "jump" && s > start - 0.25 && s < start) return [noise(1), 14 + noise(3), noise(1)];
       if (s >= start && s < start + air) { const bump = sc.name === "jump" && s > start + 0.15 && s < start + 0.19 ? 6 : 0; return [noise(2), 1.5 + bump + noise(3), noise(2)]; }
       if (s >= start + air && s < start + air + 0.12) return [noise(3), 24 + noise(6), noise(3)];
@@ -485,21 +485,22 @@ function Jump(box) {
 
 // ---- mechanics: drop ----
 function Drop(box) {
-  box.innerHTML = step("Predict", `<p>You drop the phone from 1 metre onto a cushion. How long does the fall take?</p>${slider("guess", 0.1, 1.5, 0.01, 0.8, "s", 2)}`)
-    + step("Measure", `<p>Hold the phone 1 m above a cushion or a bed. Press the button and let go after "Drop!".</p><button data-r="rec">Start the drop</button><div class="count" data-r="count" hidden></div><canvas data-r="chart" hidden></canvas>`)
-    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Your guess", "g1"], ["Formula", "g2"], ["Measured", "g3"]])}<p class="verdict" data-r="verdict"></p><p>Every object falls the same way, whatever its weight: h = ½·g·t², so t = √(2h/g).</p>`)}</div>`
+  box.innerHTML = step("Predict", `<p>Hold the phone above your bed, at any height you like: at your waist, your chest or above your head. No ruler needed: the phone will measure the height for you. How high do you think it is?</p>${slider("guess", 20, 220, 5, 100, "cm", 0)}`)
+    + step("Measure", `<p>Press the button and let go after "Drop!". Make sure it lands on the bed or a thick cushion.</p><button data-r="rec">Start the drop</button><div class="count" data-r="count" hidden></div><canvas data-r="chart" hidden></canvas>`)
+    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Your guess", "g1"], ["Fall time", "g2"], ["Real height", "g3"]])}<p class="verdict" data-r="verdict"></p>
+      <p>Every object falls the same way, whatever its weight: h = ½·g·t². So timing a fall is enough to know the height. The formula just became a ruler.</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
-  const q = bind(box); q.sliderOut("guess", 2);
+  const q = bind(box); q.sliderOut("guess", 0);
   q("rec").onclick = () => {
     q("rec").disabled = true;
     countdown(q("count"), ["3", "2", "1", "Drop!"], () => recordFor(["acc"], 3, { name: "drop" }, (d) => {
       q("count").hidden = true; q("rec").disabled = false;
       const r = airtime(d.acc); chart(q("chart"), d.acc, mag3, r && r.band, G, "gravity when held still (9.8)"); q.show("res");
       if (!r) { q("formula").textContent = "No fall detected."; q("verdict").textContent = "Let go cleanly after \"Drop!\" and make sure it lands on something soft."; return; }
-      const theo = Math.sqrt(2 / G), guess = +q("guess").value;
-      q("formula").textContent = `t = √(2h / g) = √(2 × 1 / 9.81) = ${fmt(theo)} s · you measured ${fmt(r.t)} s, a fall of ${fmt(G * r.t * r.t / 2)} m`;
-      q("g1").textContent = fmt(guess) + " s"; q("g2").textContent = fmt(theo) + " s"; q("g3").textContent = fmt(r.t) + " s";
-      q("verdict").textContent = verdict(guess, theo, "s", 2); earn("drop");
+      const h = G * r.t * r.t / 2 * 100, guess = +q("guess").value;
+      q("formula").textContent = `h = ½ · g · t² = 0.5 × 9.81 × ${fmt(r.t)}² = ${fmt(h, 0)} cm`;
+      q("g1").textContent = `${guess} cm`; q("g2").textContent = `${fmt(r.t)} s`; q("g3").textContent = `${fmt(h, 0)} cm`;
+      q("verdict").textContent = verdict(guess, h, "cm", 0); earn("drop");
       exercise(q, "s", () => { const h = pickOne([2, 3, 5, 10, 20]), a = Math.sqrt(2 * h / G); return { q: `A ball is dropped from a ${h} m balcony. How long does it take to reach the ground?`, a, how: `t = √(2 × ${h} / 9.81) = ${fmt(a)} s.` }; });
     }));
   };
@@ -542,16 +543,17 @@ function Lift(box) {
 
 // ---- mechanics: pendulum (measure g) ----
 function Pendulum(box) {
-  box.innerHTML = step("Set up", `<p>Hang the phone from a string, a lanyard or a charging cable. Measure the length from the hook to the middle of the phone.</p>
-      <div class="row"><label class="muted" for="pl">Length</label><input type="number" id="pl" data-r="len" value="0.50" step="0.01" min="0.1" max="3"><span class="unit">m</span></div>`)
+  box.innerHTML = step("Set up", `<p>Hang the phone from a charging cable (most are 1 m long, often printed on the box), a lanyard or a string, and let it swing gently.</p>
+      <div class="row"><label class="muted" for="pl">Length, if you know it</label><input type="number" id="pl" data-r="len" value="1.00" step="0.01" min="0.1" max="3" placeholder="?"><span class="unit">m</span></div>
+      <p class="muted">Don't know it? Empty the box: the phone will work out the length from the swing.</p>`)
     + step("Predict", `<p>How long will one full swing (there and back) take?</p>${slider("guess", 0.3, 3, 0.05, 1, "s", 2)}`)
     + step("Measure", `<p>Pull the phone a little to the side (a small swing), let go, then press the button. It records 10 seconds.</p><button data-r="rec">Record the swing</button><p class="muted" data-r="left" hidden></p><canvas data-r="chart" hidden></canvas>`)
     + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Your guess", "g1"], ["Formula", "g2"], ["Measured", "g3"]])}<p class="verdict" data-r="verdict"></p><div class="formula" data-r="gmeas"></div>
-      <p>The period depends only on the length and on gravity, not on the mass or the size of the swing (if it stays small). So timing a swing lets you measure gravity itself.</p>`)}</div>`
+      <p>The period depends only on the length and on gravity, not on the mass or the size of the swing (if it stays small). Know the length and the swing measures gravity; know gravity and the swing measures the length.</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box); q.sliderOut("guess", 2);
   q("rec").onclick = () => {
-    const L = Math.max(0.05, parseFloat(String(q("len").value).replace(",", ".")) || 0.5);
+    const given = parseFloat(String(q("len").value).replace(",", ".")), known = Number.isFinite(given) && given > 0.05, L = known ? given : 1;
     q("rec").disabled = true; q.show("left"); q("left").textContent = "Recording…";
     recordFor(["gyro"], 10, { name: "pendulum", L }, (d) => {
       q("rec").disabled = false; q.show("left", false);
@@ -565,11 +567,19 @@ function Pendulum(box) {
       const T = median(periods.filter((p) => p > 0.2 && p < 6));
       chart(q("chart"), v, (p) => p.v, null, 0, "turning speed (rad/s)", amp * 1.1 || 1, -(amp * 1.1 || 1)); q.show("res");
       if (!Number.isFinite(T) || periods.length < 2) { q("formula").textContent = "No steady swing detected."; q("verdict").textContent = "Let it swing freely for a few seconds before recording, with a small, smooth swing."; q("gmeas").textContent = ""; return; }
-      const theo = TAU * Math.sqrt(L / G), gm = 4 * Math.PI * Math.PI * L / (T * T), guess = +q("guess").value;
-      q("formula").textContent = `T = 2π · √(L / g) = 2π × √(${fmt(L)} / 9.81) = ${fmt(theo)} s`;
-      q("g1").textContent = fmt(guess) + " s"; q("g2").textContent = fmt(theo) + " s"; q("g3").textContent = fmt(T) + " s";
+      const guess = +q("guess").value, Lfound = G * T * T / (4 * Math.PI * Math.PI);
+      q("g1").textContent = fmt(guess) + " s"; q("g3").textContent = fmt(T) + " s";
       q("verdict").textContent = verdict(guess, T, "s", 2);
-      q("gmeas").textContent = `You measured gravity: g = 4π² · L / T² = ${fmt(gm)} m/s² (true value 9.81)`;
+      if (known) {
+        const theo = TAU * Math.sqrt(L / G), gm = 4 * Math.PI * Math.PI * L / (T * T);
+        q("formula").textContent = `T = 2π · √(L / g) = 2π × √(${fmt(L)} / 9.81) = ${fmt(theo)} s`;
+        q("g2").textContent = fmt(theo) + " s";
+        q("gmeas").textContent = `You measured gravity: g = 4π² · L / T² = ${fmt(gm)} m/s² (true value 9.81)`;
+      } else {
+        q("formula").textContent = `T = 2π · √(L / g), so L = g · T² / 4π² = 9.81 × ${fmt(T)}² / 4π² = ${fmt(Lfound)} m`;
+        q("g2").textContent = `L = ${fmt(Lfound)} m`;
+        q("gmeas").textContent = `Your string is about ${fmt(Lfound * 100, 0)} cm long, measured only by timing the swing.`;
+      }
       earn("pendulum");
       exercise(q, "s", () => { const l = pickOne([0.25, 1, 1.5, 2, 2.5, 4]), a = TAU * Math.sqrt(l / G); return { q: `A playground swing has ropes ${l} m long. How long is one full swing?`, a, how: `T = 2π × √(${l} / 9.81) = ${fmt(a)} s.` }; });
     });
@@ -578,8 +588,8 @@ function Pendulum(box) {
 
 // ---- mechanics: spin (circular motion) ----
 function Spin(box) {
-  box.innerHTML = step("Set up", `<p>Lay the phone flat on an office chair seat or a turntable, away from the centre. Measure its distance from the centre.</p>
-      <div class="row"><label class="muted" for="sr">Distance</label><input type="number" id="sr" data-r="r" value="30" min="5" max="100"><span class="unit">cm</span></div>
+  box.innerHTML = step("Set up", `<p>Lay the phone flat on an office chair seat, near the edge. No need to measure anything: the phone will work out how far it is from the centre.</p>
+      <div class="row"><label class="muted" for="sr">Distance, only if you want to check</label><input type="number" id="sr" data-r="r" value="" placeholder="?" min="5" max="100"><span class="unit">cm</span></div>
       <div class="row"><div class="live"><span class="big" data-r="w">--</span><span class="unit">turns per minute</span></div></div>`)
     + step("Predict", `<p>If the chair spins twice as fast, the acceleration towards the centre becomes…</p>${choices("guess", [["2", "2 × bigger"], ["4", "4 × bigger"], ["1", "The same"]])}`)
     + step("Measure", `<p>Spin the chair steadily, then press the button. It records 5 seconds.</p><button data-r="rec">Record the spin</button><p class="muted" data-r="left" hidden></p>`)
@@ -593,13 +603,13 @@ function Spin(box) {
     q("rec").disabled = true; q.show("left"); q("left").textContent = "Recording…";
     recordFor(["gyro", "acc"], 5, { name: "spin" }, (d) => {
       q("rec").disabled = false; q.show("left", false); q.show("res");
-      const w = mean(d.gyro.map((s) => Math.abs(s.z))), a = mean(d.acc.map((s) => Math.hypot(s.x, s.y))), r = +q("r").value / 100 || 0.3;
+      const w = mean(d.gyro.map((s) => Math.abs(s.z))), a = mean(d.acc.map((s) => Math.hypot(s.x, s.y))), r = +q("r").value / 100;
       if (!(w > 0.5)) { q("formula").textContent = "The chair is not spinning fast enough."; q("verdict").textContent = "Spin at least one turn every 10 seconds, steadily."; return; }
       const rFound = a / (w * w);
-      q("formula").textContent = `a = ω² · r = ${fmt(w)}² × ${fmt(r)} = ${fmt(w * w * r)} m/s² · the phone measured ${fmt(a)} m/s²`;
+      q("formula").textContent = `a = ω² · r, so r = a / ω² = ${fmt(a)} / ${fmt(w)}² = ${fmt(rFound * 100, 0)} cm`;
       q("g1").textContent = `${fmt(w)} rad/s`; q("g2").textContent = `${fmt(a)} m/s²`; q("g3").textContent = `${fmt(rFound * 100, 0)} cm`;
       const g = guess();
-      q("verdict").textContent = (!g ? "" : g === "4" ? "Your prediction was right: 4 × bigger. " : "The answer is 4 × bigger, because ω is squared. ") + `From its own readings, the phone worked out it is ${fmt(rFound * 100, 0)} cm from the centre (you measured ${fmt(r * 100, 0)} cm).`;
+      q("verdict").textContent = (!g ? "" : g === "4" ? "Your prediction was right: 4 × bigger. " : "The answer is 4 × bigger, because ω is squared. ") + `From its own readings, the phone worked out it is ${fmt(rFound * 100, 0)} cm from the centre` + (r > 0 ? ` (you measured ${fmt(r * 100, 0)} cm).` : ". Check it with a hand span: about 20 cm.");
       earn("spin");
       exercise(q, "m/s²", () => { const ww = pickOne([1, 1.5, 2, 2.5]), rr = pickOne([1, 1.5, 2, 3]), ac = ww * ww * rr; return { q: `A merry-go-round turns at ${ww} rad/s. A child sits ${rr} m from the centre. What is the child's acceleration?`, a: ac, how: `a = ${ww}² × ${rr} = ${fmt(ac)} m/s².` }; });
     });
@@ -614,9 +624,10 @@ function Magnet(box) {
       <svg class="fig" viewBox="0 0 200 120" aria-hidden="true"><circle cx="100" cy="60" r="52" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="2"/>
       <g data-r="arrow"><line x1="100" y1="94" x2="100" y2="26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M100 16 L90 34 L110 34 Z" fill="currentColor"/></g></svg>
       <p class="muted">Earth's field alone is about 25 to 65 µT. Bring a fridge magnet near the top of the phone and watch the number jump.</p>`)
-    + step("Predict", `<p>You move the magnet from 2 cm to 4 cm away: twice as far. The field becomes…</p>${choices("guess", [["2", "½ as strong"], ["4", "¼ as strong"], ["8", "⅛ as strong"]])}`)
-    + step("Measure", `<p>Do the three readings in order. Keep the phone still.</p><div class="row"><button class="small" data-r="c0">1 · No magnet</button><button class="small" data-r="c1" disabled>2 · Magnet at 2 cm</button><button class="small" data-r="c2" disabled>3 · Magnet at 4 cm</button></div><p class="muted" data-r="caps"></p>`)
-    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["At 2 cm", "g1"], ["At 4 cm", "g2"], ["Ratio", "g3"]])}<p class="verdict" data-r="verdict"></p>
+    + step("Predict", `<p>You move the magnet twice as far away. The field becomes…</p>${choices("guess", [["2", "½ as strong"], ["4", "¼ as strong"], ["8", "⅛ as strong"]])}`)
+    + step("Measure", `<p>No ruler needed: use your fingers. Keep the phone still and do the three readings in order.</p>
+      <div class="row"><button class="small" data-r="c0">1 · No magnet</button><button class="small" data-r="c1" disabled>2 · Magnet one finger-width away</button><button class="small" data-r="c2" disabled>3 · Two finger-widths away</button></div><p class="muted" data-r="caps"></p>`)
+    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["1 finger away", "g1"], ["2 fingers away", "g2"], ["Ratio", "g3"]])}<p class="verdict" data-r="verdict"></p>
       <p>A small magnet's field fades very fast: B ∝ 1/d³. Twice as far gives 2³ = 8 times weaker. That is why magnets only grab things when they are very close.</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box), guess = q.choice("guess");
@@ -628,11 +639,11 @@ function Magnet(box) {
   });
   const vecAvg = (s) => ({ x: mean(s.map((p) => p.x)), y: mean(s.map((p) => p.y)), z: mean(s.map((p) => p.z)) });
   const extra = (v) => Math.hypot(v.x - base.x, v.y - base.y, v.z - base.z);
-  q("c0").onclick = () => recordFor(["mag"], 1, { name: "magnet", d: 0 }, (d) => { base = vecAvg(d.mag); q("caps").textContent = `Earth's field here: ${fmt(Math.hypot(base.x, base.y, base.z), 0)} µT. Now hold the magnet 2 cm from the top of the phone.`; q("c1").disabled = false; });
-  q("c1").onclick = () => recordFor(["mag"], 1, { name: "magnet", d: 1 }, (d) => { b1 = extra(vecAvg(d.mag)); q("caps").textContent = `Magnet at 2 cm: ${fmt(b1, 0)} µT. Now move it to 4 cm, same direction.`; q("c2").disabled = false; });
+  q("c0").onclick = () => recordFor(["mag"], 1, { name: "magnet", d: 0 }, (d) => { base = vecAvg(d.mag); q("caps").textContent = `Earth's field here: ${fmt(Math.hypot(base.x, base.y, base.z), 0)} µT. Now lay one finger flat on the phone where the field jumped most, and hold the magnet against it.`; q("c1").disabled = false; });
+  q("c1").onclick = () => recordFor(["mag"], 1, { name: "magnet", d: 1 }, (d) => { b1 = extra(vecAvg(d.mag)); q("caps").textContent = `One finger away: ${fmt(b1, 0)} µT. Now put two fingers between them, same direction.`; q("c2").disabled = false; });
   q("c2").onclick = () => recordFor(["mag"], 1, { name: "magnet", d: 2 }, (d) => {
     const b2 = extra(vecAvg(d.mag)), ratio = b1 / Math.max(b2, 0.1); q.show("res");
-    q("formula").textContent = `B ∝ 1 / d³ → (4 / 2)³ = 8 · you measured ${fmt(b1, 0)} / ${fmt(b2, 0)} = ${fmt(ratio, 1)}`;
+    q("formula").textContent = `B ∝ 1 / d³ → twice as far: 2³ = 8 · you measured ${fmt(b1, 0)} / ${fmt(b2, 0)} = ${fmt(ratio, 1)}`;
     q("g1").textContent = `${fmt(b1, 0)} µT`; q("g2").textContent = `${fmt(b2, 0)} µT`; q("g3").textContent = `${fmt(ratio, 1)} ×`;
     const g = guess();
     q("verdict").textContent = !g ? `The field dropped ${fmt(ratio, 1)} times.` : g === "8" ? `Right: ⅛. You measured ${fmt(ratio, 1)} times weaker.` : `The answer is ⅛: you measured ${fmt(ratio, 1)} times weaker.`;
@@ -708,9 +719,10 @@ function Light(box) {
   box.innerHTML = step("Set up", `<p>The light sensor is at the top of the screen, next to the front camera. Dim the room. A friend shines their phone's torch at it.</p>
       <div class="live"><span class="big" data-r="lux">--</span><span class="unit">lux</span></div>
       <button class="small ghost" data-r="torch" hidden>Be the torch for a friend: turn my torch on</button>`)
-    + step("Predict", `<p>Your friend moves the torch from 25 cm to 50 cm: twice as far. The light becomes…</p>${choices("guess", [["2", "½ as bright"], ["4", "¼ as bright"], ["8", "⅛ as bright"]])}`)
-    + step("Measure", `<p>Do the three readings in order, keeping the torch pointed straight at the sensor.</p><div class="row"><button class="small" data-r="c0">1 · Torch off</button><button class="small" data-r="c1" disabled>2 · Torch at 25 cm</button><button class="small" data-r="c2" disabled>3 · Torch at 50 cm</button></div><p class="muted" data-r="caps"></p>`)
-    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["At 25 cm", "g1"], ["At 50 cm", "g2"], ["Ratio", "g3"]])}<p class="verdict" data-r="verdict"></p>
+    + step("Predict", `<p>Your friend moves the torch twice as far away. The light becomes…</p>${choices("guess", [["2", "½ as bright"], ["4", "¼ as bright"], ["8", "⅛ as bright"]])}`)
+    + step("Measure", `<p>No ruler needed: use a phone as the measuring stick. Keep the torch pointed straight at the sensor.</p>
+      <div class="row"><button class="small" data-r="c0">1 · Torch off</button><button class="small" data-r="c1" disabled>2 · Torch one phone-length away</button><button class="small" data-r="c2" disabled>3 · Two phone-lengths away</button></div><p class="muted" data-r="caps"></p>`)
+    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["1 phone away", "g1"], ["2 phones away", "g2"], ["Ratio", "g3"]])}<p class="verdict" data-r="verdict"></p>
       <p>Light spreads out over a bigger and bigger area as it travels: twice as far, the same light covers 4 times the area. So I ∝ 1/d².</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box), guess = q.choice("guess");
@@ -721,11 +733,11 @@ function Light(box) {
     q.show("torch");
     q("torch").onclick = () => { torchOn = !torchOn; if (!Native.torch(torchOn)) torchOn = false; q("torch").textContent = torchOn ? "Turn my torch off" : "Be the torch for a friend: turn my torch on"; };
   }
-  q("c0").onclick = () => captureAvg("light", 1, { name: "light", where: "off" }, (p) => p.x, (v) => { room = v; q("caps").textContent = `Room light: ${fmt(v, 0)} lux. Now the torch at 25 cm.`; q("c1").disabled = false; });
-  q("c1").onclick = () => captureAvg("light", 1, { name: "light", where: "near" }, (p) => p.x, (v) => { l1 = v - room; q("caps").textContent = `Torch at 25 cm adds ${fmt(l1, 0)} lux. Now move it to 50 cm.`; q("c2").disabled = false; });
+  q("c0").onclick = () => captureAvg("light", 1, { name: "light", where: "off" }, (p) => p.x, (v) => { room = v; q("caps").textContent = `Room light: ${fmt(v, 0)} lux. Now the torch one phone-length from the sensor.`; q("c1").disabled = false; });
+  q("c1").onclick = () => captureAvg("light", 1, { name: "light", where: "near" }, (p) => p.x, (v) => { l1 = v - room; q("caps").textContent = `One phone-length away, the torch adds ${fmt(l1, 0)} lux. Now two phone-lengths away.`; q("c2").disabled = false; });
   q("c2").onclick = () => captureAvg("light", 1, { name: "light", where: "far" }, (p) => p.x, (v) => {
     const l2 = Math.max(v - room, 0.5), ratio = l1 / l2; q.show("res");
-    q("formula").textContent = `I ∝ 1 / d² → (50 / 25)² = 4 · you measured ${fmt(l1, 0)} / ${fmt(l2, 0)} = ${fmt(ratio, 1)}`;
+    q("formula").textContent = `I ∝ 1 / d² → twice as far: 2² = 4 · you measured ${fmt(l1, 0)} / ${fmt(l2, 0)} = ${fmt(ratio, 1)}`;
     q("g1").textContent = `${fmt(l1, 0)} lx`; q("g2").textContent = `${fmt(l2, 0)} lx`; q("g3").textContent = `${fmt(ratio, 1)} ×`;
     const g = guess();
     q("verdict").textContent = !g ? `The light dropped ${fmt(ratio, 1)} times.` : g === "4" ? `Right: ¼. You measured ${fmt(ratio, 1)} times dimmer.` : `The answer is ¼: you measured ${fmt(ratio, 1)} times dimmer.`;
@@ -797,7 +809,8 @@ function Cool(box) {
       <div class="live"><span class="big" data-r="temp">--</span><span class="unit">°C</span></div>`)
     + step("Predict", `<p>When does the phone cool down fastest?</p>${choices("guess", [["start", "At the start, while it is hottest"], ["steady", "At the same speed all along"], ["end", "Near the end"]])}`)
     + step("Measure", `<p>Record at least 2 minutes (5 is better), then press Stop.</p>
-      <div class="row"><label class="muted" for="rt">Room temperature</label><input type="number" id="rt" data-r="room" value="20" step="0.5"><span class="unit">°C</span></div>
+      <div class="row"><label class="muted" for="rt">Room temperature, if you know it</label><input type="number" id="rt" data-r="room" value="" placeholder="?" step="0.5"><span class="unit">°C</span></div>
+      <p class="muted">Leave it empty: the phone works out the room temperature from the shape of its own cooling curve.</p>
       <div class="row"><button data-r="go">Start recording</button><button class="ghost" data-r="stop" disabled>Stop</button><span class="muted" data-r="el"></span></div><canvas data-r="chart" hidden></canvas>`)
     + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Start", "g1"], ["After", "g2"], ["Halving time", "g3"]])}<p class="verdict" data-r="verdict"></p>
       <p>Heat flows faster when the temperature difference is bigger (Newton's law of cooling). So the gap to room temperature shrinks by the same fraction in each equal stretch of time: fast at first, then slower and slower.</p>`)}</div>`
@@ -807,17 +820,33 @@ function Cool(box) {
   const off = Hub.on("battery", (t, v, i, temp) => { q("temp").textContent = fmt(temp, 1); if (rec) rec.push({ t, v: temp }); });
   q("go").onclick = () => {
     rec = []; Hub.scene = { name: "cool", t0: performance.now() }; q("go").disabled = true; q("stop").disabled = false; const t0 = Date.now();
-    iv = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); q("el").textContent = `${Math.floor(s / 60)} min ${s % 60} s`; if (rec.length > 2) chart(q("chart"), rec, (p) => p.v, null, +q("room").value, "room temperature", Math.max(...rec.map((p) => p.v)) + 1, Math.min(+q("room").value, ...rec.map((p) => p.v)) - 1); }, 1000);
+    iv = setInterval(() => {
+      const s = Math.round((Date.now() - t0) / 1000); q("el").textContent = `${Math.floor(s / 60)} min ${s % 60} s`;
+      const room = parseFloat(q("room").value), hasRoom = Number.isFinite(room), vs = rec.map((p) => p.v);
+      if (rec.length > 2) chart(q("chart"), rec, (p) => p.v, null, hasRoom ? room : null, "room temperature", Math.max(...vs) + 1, Math.min(hasRoom ? room : Infinity, ...vs) - 1);
+    }, 1000);
   };
+  // fit ln(T − room) against time; when the room temperature is unknown, try values and keep the straightest fit
+  function fitCooling(pts, room) {
+    const fit = (rm) => {
+      const p = pts.filter((x) => x.v - rm > 0.2); if (p.length < 10) return null;
+      const xs = p.map((x) => (x.t - p[0].t) / 1000), ys = p.map((x) => Math.log(x.v - rm)), mx = mean(xs), my = mean(ys);
+      const sxy = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0), sxx = xs.reduce((s, x) => s + (x - mx) ** 2, 0), syy = ys.reduce((s, y) => s + (y - my) ** 2, 0);
+      return { k: -sxy / sxx, r2: syy ? (sxy * sxy) / (sxx * syy) : 0, room: rm };
+    };
+    if (Number.isFinite(room)) return fit(room);
+    const lo = Math.min(...pts.map((p) => p.v)); let best = null;
+    for (let rm = lo - 20; rm < lo - 0.3; rm += 0.1) { const f = fit(rm); if (f && f.k > 0 && (!best || f.r2 > best.r2)) best = f; }
+    return best;
+  }
   q("stop").onclick = () => {
     clearInterval(iv); q("go").disabled = false; q("stop").disabled = true; Hub.scene = { name: "idle", t0: 0 };
     const data = rec || []; rec = null; q.show("res");
-    const room = +q("room").value, pts = data.filter((p) => p.v - room > 0.2);
-    if (pts.length < 10 || (data[data.length - 1].t - data[0].t) < 30000) { q("formula").textContent = "Not enough data yet."; q("verdict").textContent = "Record for at least 2 minutes while the phone is warmer than the room."; return; }
-    const xs = pts.map((p) => (p.t - pts[0].t) / 1000), ys = pts.map((p) => Math.log(p.v - room));
-    const mx = mean(xs), my = mean(ys), k = -xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / xs.reduce((s, x) => s + (x - mx) ** 2, 0);
+    const given = parseFloat(q("room").value);
+    if (data.length < 10 || (data[data.length - 1].t - data[0].t) < 30000) { q("formula").textContent = "Not enough data yet."; q("verdict").textContent = "Record for at least 2 minutes while the phone is warmer than the room."; return; }
+    const f = fitCooling(data, given), k = f ? f.k : 0;
     const T0 = data[0].v, T1 = data[data.length - 1].v, half = Math.log(2) / k;
-    q("formula").textContent = k > 0 ? `T = T_room + (T₀ − T_room) · e^(−t/τ) · the gap to room temperature halves every ${fmt(half / 60, 1)} min` : "The phone did not cool down.";
+    q("formula").textContent = k > 0 ? `T = T_room + (T₀ − T_room) · e^(−t/τ) · the gap to room temperature halves every ${fmt(half / 60, 1)} min` + (Number.isFinite(given) ? "" : ` · room temperature found from the curve: ${fmt(f.room, 1)} °C`) : "The phone did not cool down: warm it up first, then record.";
     q("g1").textContent = `${fmt(T0, 1)} °C`; q("g2").textContent = `${fmt(T1, 1)} °C`; q("g3").textContent = k > 0 ? `${fmt(half / 60, 1)} min` : "--";
     const g = guess();
     q("verdict").textContent = !g ? "" : g === "start" ? "Right: it cools fastest at the start, when it is hottest." : "It cools fastest at the start, when the gap to room temperature is biggest.";
@@ -832,15 +861,15 @@ function Wifi(box) {
   box.innerHTML = step("Your signal", `<p>Wi-Fi is an electromagnetic wave, like light, with a wavelength of about 6 to 12 cm. The phone measures how strong it is, in dBm.</p>
       <div class="live"><span class="big" data-r="rssi">--</span><span class="unit">dBm</span></div><div class="meter"><i data-r="lvl"></i></div><p class="muted">-30 is excellent, -70 is weak, -90 is almost nothing.</p>`)
     + step("Predict", `<p>Each time you double your distance from the router, the signal drops by about…</p>${choices("guess", [["3", "3 dB"], ["6", "6 dB"], ["12", "12 dB"]])}`)
-    + step("Measure", `<p>Stand where you can see the router. Capture at 1 m, 2 m and 4 m (3 seconds each).</p><div class="row"><button class="small" data-r="c1">1 m</button><button class="small" data-r="c2" disabled>2 m</button><button class="small" data-r="c4" disabled>4 m</button></div><p class="muted" data-r="caps"></p>`)
-    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["1 m", "g1"], ["2 m", "g2"], ["4 m", "g3"]])}<p class="verdict" data-r="verdict"></p>
+    + step("Measure", `<p>No tape measure needed: count your steps from the router, keeping it in sight. Capture 1 step, 2 steps and 4 steps away (3 seconds each).</p><div class="row"><button class="small" data-r="c1">1 step</button><button class="small" data-r="c2" disabled>2 steps</button><button class="small" data-r="c4" disabled>4 steps</button></div><p class="muted" data-r="caps"></p>`)
+    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["1 step", "g1"], ["2 steps", "g2"], ["4 steps", "g3"]])}<p class="verdict" data-r="verdict"></p>
       <p>Like light, the wave spreads over 4 times the area at twice the distance, so its power falls to ¼: P ∝ 1/d². On the decibel scale that is 10 · log₁₀(4) ≈ 6 dB per doubling. Walls and people absorb extra, so indoors the drop is often bigger.</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box), guess = q.choice("guess");
   const vals = {};
   const off = Hub.on("wifi", (t, r) => { q("rssi").textContent = fmt(r, 0); q("lvl").style.width = Math.max(0, Math.min(100, (r + 95) * 1.6)) + "%"; });
   const cap = (d, next) => captureAvg("wifi", 3, { name: "wifi", d }, (p) => p.x, (v) => {
-    vals[d] = v; q("caps").textContent = `At ${d} m: ${fmt(v, 1)} dBm.` + (next ? ` Now step back to ${next} m.` : ""); if (next) q("c" + next).disabled = false; else finish();
+    vals[d] = v; q("caps").textContent = `${d} step${d > 1 ? "s" : ""} away: ${fmt(v, 1)} dBm.` + (next ? ` Now stand ${next} steps away.` : ""); if (next) q("c" + next).disabled = false; else finish();
   });
   q("c1").onclick = () => cap(1, 2); q("c2").onclick = () => cap(2, 4); q("c4").onclick = () => cap(4, 0);
   function finish() {
@@ -886,11 +915,12 @@ function Run(box) {
 // ---- mechanics: light gate (proximity sensor) ----
 function Gate(box) {
   box.innerHTML = step("Set up", `<p>The proximity sensor (next to the front camera) notices when something passes just above it, like the light gates used in labs. Lay the phone flat, screen up. Hang keys on a string so they swing just above the sensor.</p>
-      <div class="row"><label class="muted" for="gl">String length</label><input type="number" id="gl" data-r="len" value="0.50" step="0.01" min="0.1" max="3"><span class="unit">m</span></div>
+      <div class="row"><label class="muted" for="gl">String length, if you know it</label><input type="number" id="gl" data-r="len" value="" step="0.01" min="0.1" max="3" placeholder="?"><span class="unit">m</span></div>
+      <p class="muted">Leave it empty and the phone will work out the string length from the swing.</p>
       <div class="live"><span class="big" data-r="state">--</span><span class="unit" data-r="cnt"></span></div>`)
     + step("Predict", `<p>How long is one full swing (there and back)?</p>${slider("guess", 0.3, 3, 0.05, 1, "s", 2)}`)
     + step("Measure", `<p>Start the swing, then press Record (15 seconds).</p><button data-r="rec">Record the passes</button><p class="muted" data-r="left" hidden></p>`)
-    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Passes", "g1"], ["Full swing", "g2"], ["Gravity found", "g3"]])}<p class="verdict" data-r="verdict"></p>
+    + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Passes", "g1"], ["Full swing", "g2"], ["Found", "g3"]])}<p class="verdict" data-r="verdict"></p>
       <p>The keys cross the sensor twice per full swing, so the period is twice the time between passes. Then T = 2π · √(L / g) gives gravity: g = 4π² · L / T².</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box); q.sliderOut("guess", 2);
@@ -898,7 +928,7 @@ function Gate(box) {
   const isNear = (x) => { maxSeen = Math.max(maxSeen, x); return x === 0 || x <= maxSeen * 0.5; };
   const off = Hub.on("prox", (t, x) => { const n = isNear(x); if (n && !near) count++; near = n; q("state").textContent = n ? "blocked" : "clear"; q("cnt").textContent = `${count} passes`; });
   q("rec").onclick = () => {
-    const L = Math.max(0.05, parseFloat(String(q("len").value).replace(",", ".")) || 0.5);
+    const given = parseFloat(String(q("len").value).replace(",", ".")), known = Number.isFinite(given) && given > 0.05, L = known ? given : 0.5;
     q("rec").disabled = true; q.show("left"); q("left").textContent = "Recording…";
     recordFor(["prox"], 15, { name: "gate", L }, (d) => {
       q("rec").disabled = false; q.show("left", false); q.show("res");
@@ -906,9 +936,9 @@ function Gate(box) {
       d.prox.forEach((s) => { const n = s.x === 0 || s.x <= mx * 0.5; if (n && !was && (!passes.length || s.t - passes[passes.length - 1] > 150)) passes.push(s.t); was = n; });
       const gaps = []; for (let i = 1; i < passes.length; i++) gaps.push((passes[i] - passes[i - 1]) / 1000);
       if (gaps.length < 3) { q("formula").textContent = "Not enough passes."; q("verdict").textContent = "Make the keys swing lower, just above the sensor near the front camera."; return; }
-      const T = 2 * median(gaps), g = 4 * Math.PI * Math.PI * L / (T * T), guess = +q("guess").value;
-      q("formula").textContent = `T = 2 × ${fmt(T / 2)} s = ${fmt(T)} s → g = 4π² × ${fmt(L)} / ${fmt(T)}² = ${fmt(g)} m/s²`;
-      q("g1").textContent = passes.length; q("g2").textContent = `${fmt(T)} s`; q("g3").textContent = `${fmt(g)} m/s²`;
+      const T = 2 * median(gaps), g = 4 * Math.PI * Math.PI * L / (T * T), guess = +q("guess").value, Lf = G * T * T / (4 * Math.PI * Math.PI);
+      q("formula").textContent = known ? `T = 2 × ${fmt(T / 2)} s = ${fmt(T)} s → g = 4π² × ${fmt(L)} / ${fmt(T)}² = ${fmt(g)} m/s²` : `T = 2 × ${fmt(T / 2)} s = ${fmt(T)} s → string length L = g · T² / 4π² = ${fmt(Lf)} m`;
+      q("g1").textContent = passes.length; q("g2").textContent = `${fmt(T)} s`; q("g3").textContent = known ? `g = ${fmt(g)} m/s²` : `L = ${fmt(Lf * 100, 0)} cm`;
       q("verdict").textContent = verdict(guess, T, "s", 2); earn("gate");
       exercise(q, "m", () => { const gap = pickOne([0.6, 0.7, 0.8, 1.0]), T2 = 2 * gap, a = G * T2 * T2 / (4 * Math.PI * Math.PI); return { q: `Keys on a string cross a light gate every ${gap} s. How long is the string?`, a, how: `T = 2 × ${gap} = ${fmt(T2, 1)} s, L = g · T² / 4π² = ${fmt(a)} m.` }; });
     });
@@ -934,8 +964,9 @@ function demoEnvelope(dist) {
   return env;
 }
 function Echo(box) {
-  box.innerHTML = step("Set up", `<p>Stand facing a big flat wall at least 15 m away: a building across a courtyard is ideal. Pace or measure the distance.</p>
-      <div class="row"><label class="muted" for="ed">Distance to the wall</label><input type="number" id="ed" data-r="dist" value="20" min="5" max="200"><span class="unit">m</span></div>`)
+  box.innerHTML = step("Set up", `<p>Stand facing a big flat wall at least 20 steps away: a building across a courtyard is ideal. Count your steps as you walk away from it (one step is about 0.75 m).</p>
+      <div class="row"><label class="muted" for="ed">Steps to the wall</label><input type="number" id="ed" data-r="dist" value="" placeholder="?" min="5" max="300"></div>
+      <p class="muted">Leave it empty and the phone works the other way round: it uses the speed of sound to find how far the wall is, like a bat's sonar.</p>`)
     + step("Predict", `<p>How fast does sound travel?</p>${slider("guess", 100, 1000, 10, 500, "m/s", 0)}`)
     + step("Measure", `<p>Press the button, wait for "Clap!", then clap once, sharply. Stay quiet afterwards.</p><button data-r="rec">Record the echo</button><div class="count" data-r="count" hidden></div><canvas data-r="chart" hidden></canvas><p class="muted" data-r="micmsg"></p>`)
     + `<div data-r="res" hidden>${step("Your physics", `<div class="formula" data-r="formula"></div>${compare([["Your guess", "g1"], ["Echo delay", "g2"], ["Measured", "g3"]])}<p class="verdict" data-r="verdict"></p>
@@ -944,13 +975,22 @@ function Echo(box) {
   const q = bind(box); q.sliderOut("guess", 0);
   const analyse = (env) => {
     q("count").hidden = true; q("rec").disabled = false; window.__echo = null;
-    const dist = +q("dist").value || 20, r = findEcho(env), pts = env.map((v, i) => ({ t: i, v }));
+    const steps = +q("dist").value, known = steps > 0, dist = steps * 0.75, r = findEcho(env), pts = env.map((v, i) => ({ t: i, v }));
     chart(q("chart"), pts, (p) => p.v, r ? [r.p1, r.p2] : null, null, "", 1); q.show("res");
-    if (!r) { q("formula").textContent = "No echo found."; q("verdict").textContent = "Clap louder, stand further from the wall (15 m or more), and make sure it is quiet around you."; return; }
-    const v = 2 * dist / r.dt, guess = +q("guess").value;
-    q("formula").textContent = `v = 2d / t = 2 × ${dist} m / ${fmt(r.dt, 3)} s = ${fmt(v, 0)} m/s`;
-    q("g1").textContent = `${guess} m/s`; q("g2").textContent = `${fmt(r.dt * 1000, 0)} ms`; q("g3").textContent = `${fmt(v, 0)} m/s`;
-    q("verdict").textContent = verdict(guess, 343, "m/s", 0) + ` (The textbook value is 343 m/s.)`;
+    if (!r) { q("formula").textContent = "No echo found."; q("verdict").textContent = "Clap louder, stand further from the wall (20 steps or more), and make sure it is quiet around you."; return; }
+    const guess = +q("guess").value;
+    q("g1").textContent = `${guess} m/s`; q("g2").textContent = `${fmt(r.dt * 1000, 0)} ms`;
+    if (known) {
+      const v = 2 * dist / r.dt;
+      q("formula").textContent = `v = 2d / t = 2 × ${fmt(dist, 1)} m / ${fmt(r.dt, 3)} s = ${fmt(v, 0)} m/s`;
+      q("g3").textContent = `${fmt(v, 0)} m/s`;
+      q("verdict").textContent = verdict(guess, 343, "m/s", 0) + ` (The textbook value is 343 m/s.)`;
+    } else {
+      const d2 = 343 * r.dt / 2;
+      q("formula").textContent = `d = v · t / 2 = 343 × ${fmt(r.dt, 3)} / 2 = ${fmt(d2, 1)} m (about ${fmt(d2 / 0.75, 0)} steps)`;
+      q("g3").textContent = `wall at ${fmt(d2, 1)} m`;
+      q("verdict").textContent = verdict(guess, 343, "m/s", 0) + ` Sound travels at 343 m/s, so the echo tells you the wall is ${fmt(d2, 1)} m away. Walk there counting steps to check.`;
+    }
     earn("echo");
     exercise(q, "m", () => { const t = pickOne([0.3, 0.5, 0.8, 1.2]), a = 343 * t / 2; return { q: `You shout towards a cliff and hear the echo ${t} s later. How far away is the cliff?`, a, how: `d = 343 × ${t} / 2 = ${fmt(a, 0)} m.` }; });
   };
@@ -958,7 +998,7 @@ function Echo(box) {
     if (!Hub.demo && !(window.Native && Native.echoReady())) { q("micmsg").textContent = "Allow the microphone, then press the button again."; return; }
     q("rec").disabled = true; q("micmsg").textContent = "";
     countdown(q("count"), ["3", "2", "1", "Clap!"], () => {
-      if (Hub.demo) setTimeout(() => analyse(demoEnvelope(+q("dist").value || 20)), 1500);
+      if (Hub.demo) setTimeout(() => analyse(demoEnvelope((+q("dist").value || 27) * 0.75)), 1500);
       else { window.__echo = analyse; Native.echo(1500); }
     });
   };
@@ -1004,7 +1044,7 @@ function Reaction(box) {
 const ACTS = [
   { id: "slope", area: "Mechanics", title: "Slope", hook: "How fast does it slide?", needs: ["acc"], run: Slope, card: { f: "a = g · sin θ", when: "something slides or rolls down a slope (no friction)." } },
   { id: "jump", area: "Mechanics", title: "Jump", hook: "How high can you jump, and with how much energy?", needs: ["acc"], run: Jump, card: { f: "h = g · t² / 8   ·   E = m · g · h", when: "you know the total time in the air of a jump or throw straight up." } },
-  { id: "drop", area: "Mechanics", title: "Drop", hook: "How long does a fall take?", needs: ["acc"], run: Drop, card: { f: "t = √(2h / g)", when: "something is dropped from rest and falls freely." } },
+  { id: "drop", area: "Mechanics", title: "Drop", hook: "Measure a height with a fall", needs: ["acc"], run: Drop, card: { f: "h = ½ · g · t²   ·   t = √(2h / g)", when: "something is dropped from rest and falls freely." } },
   { id: "lift", area: "Mechanics", title: "Lift", hook: "Are you heavier in a lift?", needs: ["acc"], run: Lift, card: { f: "N = m · (g + a)", when: "you speed up or slow down going up or down." } },
   { id: "pendulum", area: "Mechanics", title: "Pendulum", hook: "Measure gravity with a string", needs: ["gyro"], run: Pendulum, card: { f: "T = 2π · √(L / g)", when: "something swings on a string, with small swings." } },
   { id: "gate", area: "Mechanics", title: "Light gate", hook: "Time swings without touching them", needs: ["prox"], run: Gate, card: { f: "T = 2 × time between passes", when: "an object swings back and forth across a light gate." } },
