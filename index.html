@@ -273,7 +273,10 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
     if (demoScene === "jump" || demoScene === "drop") {
       const air = demoScene === "jump" ? 0.53 : 0.452, start = 1.2;
       if (demoScene === "jump" && s > start - 0.25 && s < start) return [noise(1), 14 + noise(3), noise(1)];
-      if (s >= start && s < start + air) return [noise(.4), 0.3 + noise(.4), noise(.4)];
+      if (s >= start && s < start + air) {
+        const bump = demoScene === "jump" && s > start + 0.15 && s < start + 0.19 ? 6 : 0; // a real body wobbles in the air
+        return [noise(2), 1.5 + bump + noise(3), noise(2)];
+      }
       if (s >= start + air && s < start + air + 0.12) return [noise(3), 24 + noise(6), noise(3)];
       return [noise(.3), G + noise(.3), noise(.3)];
     }
@@ -304,7 +307,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
   const needData = () => { if (!gotReal && !demo) { setStatus("Turn on sensors or use demo data first"); return true; } return false; };
 
   // ---------- chart ----------
-  function chart(canvas, samples, valueOf, band, refLine, label, vmax = 25) {
+  function chart(canvas, samples, valueOf, band, refLine, label, vmax) {
+    if (!vmax) vmax = Math.min(50, Math.max(25, ...samples.map(valueOf)) * 1.05);
     canvas.hidden = false;
     const css = getComputedStyle(document.documentElement);
     const fg = css.getPropertyValue("--fg").trim(), muted = css.getPropertyValue("--muted").trim(), soft = css.getPropertyValue("--line").trim();
@@ -423,14 +427,28 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
 
   // ---------- free fall (jump and drop) ----------
   const mag = (s) => Math.hypot(s.x, s.y, s.z);
+  // Airtime = the longest stretch where the phone feels much less than gravity.
+  // Real bodies wobble in the air, so: smooth the readings, use a cut-off of 45 % of g,
+  // and ignore short bumps (under 80 ms) inside the weightless stretch.
   function airtime(smp) {
-    let best = null, run = null;
-    smp.forEach((s) => {
-      if (mag(s) < 3) { run = run || { a: s.t }; run.b = s.t; }
-      else if (run) { if (!best || run.b - run.a > best.b - best.a) best = run; run = null; }
+    const m = smp.map(mag);
+    const sm = m.map((_, i) => { const w = m.slice(Math.max(0, i - 2), i + 3); return w.reduce((a, b) => a + b, 0) / w.length; });
+    const low = 0.45 * G, runs = [];
+    let run = null;
+    sm.forEach((v, i) => {
+      if (v >= low) return;
+      const t = smp[i].t;
+      if (run && t - run.b <= 80) run.b = t;
+      else { if (run) runs.push(run); run = { a: t, b: t }; }
     });
-    if (run && (!best || run.b - run.a > best.b - best.a)) best = run;
+    if (run) runs.push(run);
+    const best = runs.sort((p, q) => (q.b - q.a) - (p.b - p.a))[0];
     if (!best) return null;
+    // Smoothing trims the edges: widen them back while the raw reading is still low.
+    let ia = smp.findIndex((s) => s.t === best.a), ib = smp.findIndex((s) => s.t === best.b);
+    while (ia > 0 && m[ia - 1] < low) ia--;
+    while (ib < smp.length - 1 && m[ib + 1] < low) ib++;
+    best.a = smp[ia].t; best.b = smp[ib].t;
     const t = (best.b - best.a) / 1000;
     return t > 0.12 && t < 1.5 ? { t, band: [best.a, best.b] } : null;
   }
