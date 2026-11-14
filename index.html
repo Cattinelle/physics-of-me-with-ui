@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Physics of Me</title>
+<meta name="description" content="Predict, measure on yourself with your phone's sensors, and see the formula with your own numbers.">
+<meta name="theme-color" content="#ffffff">
+<style>
+/* Layout: one narrow column like a lab notebook; each activity is predict → measure → formula → your turn. */
+:root {
+  --bg: #ffffff; --fg: #111111; --muted: #686868; --line: #d6d6d6; --soft: #f2f2f2; --strong: #000000; --on-strong: #ffffff;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e0e0e; --fg: #f0f0f0; --muted: #9b9b9b; --line: #2e2e2e; --soft: #191919; --strong: #ffffff; --on-strong: #000000; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font: 16px/1.45 var(--sans);
+  padding-block: max(14px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 560px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 4px; }
+h1 { font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: -0.02em; font-weight: 800; }
+.tag { margin: 0; color: var(--muted); }
+.tag b { color: var(--fg); }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pill { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
+.pill.on { color: var(--fg); border-color: var(--fg); }
+button { font: inherit; cursor: pointer; border-radius: 10px; padding: 11px 16px; border: 1.5px solid var(--fg); background: var(--strong); color: var(--on-strong); font-weight: 650; }
+button.ghost { background: transparent; color: var(--fg); }
+button.small { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, .tabs button:focus-visible { outline: 3px solid var(--muted); outline-offset: 2px; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--fg); border-radius: 12px; overflow: hidden; }
+.tabs button { border: 0; border-radius: 0; background: transparent; color: var(--fg); padding: 10px 6px; font-weight: 600; }
+.tabs button + button { border-left: 1.5px solid var(--fg); }
+.tabs button[aria-selected="true"] { background: var(--strong); color: var(--on-strong); }
+.card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
+.step { display: grid; gap: 8px; }
+.step h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.step p { margin: 0; }
+.step + .step { border-top: 1px solid var(--line); padding-top: 14px; }
+.live { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.big { font: 700 44px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.unit { color: var(--muted); font-size: 15px; }
+.muted { color: var(--muted); font-size: 14px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+input[type=range] { width: 100%; accent-color: var(--fg); }
+input[type=number] { font: 16px var(--mono); width: 120px; padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); }
+.formula { font: 600 16px/1.5 var(--mono); background: var(--soft); border-radius: 10px; padding: 12px 14px; overflow-wrap: anywhere; }
+.compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.compare div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.compare b { display: block; font: 700 20px var(--mono); font-variant-numeric: tabular-nums; }
+.compare span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.verdict { font-weight: 650; }
+canvas { width: 100%; height: 150px; display: block; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+svg.slope { width: 100%; height: auto; max-width: 100%; }
+.count { font: 800 64px/1 var(--mono); text-align: center; padding: 8px 0; }
+.cards { display: grid; gap: 8px; }
+.fcard { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; color: var(--muted); }
+.fcard.got { border: 1.5px solid var(--fg); color: var(--fg); }
+.fcard code { font: 600 15px var(--mono); }
+.fcard small { font-size: 13px; }
+.note { font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; }
+footer { color: var(--muted); font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Physics of Me</h1>
+    <p class="tag"><b>Your body is the lab. Your phone is the equipment.</b> Predict, measure, then see the formula with your own numbers.</p>
+  </header>
+
+  <div class="bar">
+    <span class="pill" id="status">Sensors off</span>
+    <button class="small" id="enable">Turn on sensors</button>
+    <button class="small ghost" id="demo" aria-pressed="false">Use demo data</button>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Activities">
+    <button role="tab" id="tab-slope" aria-selected="true">Slope</button>
+    <button role="tab" id="tab-jump" aria-selected="false">Jump</button>
+    <button role="tab" id="tab-drop" aria-selected="false">Drop</button>
+  </nav>
+
+  <!-- SLOPE -->
+  <section class="card" id="panel-slope">
+    <div class="step">
+      <h2>1 · Set up</h2>
+      <p>Lay the phone flat, screen up, on a book. Lift one end of the book. The phone reads the angle.</p>
+      <div class="live"><span class="big" id="angle">--.-</span><span class="unit">degrees</span></div>
+      <svg class="slope" viewBox="0 0 300 120" aria-hidden="true">
+        <line x1="10" y1="110" x2="290" y2="110" stroke="currentColor" stroke-opacity=".3" stroke-width="2"/>
+        <g id="ramp"><line x1="20" y1="110" x2="280" y2="110" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <rect x="200" y="96" width="40" height="12" rx="3" fill="currentColor"/></g>
+      </svg>
+      <button id="lockAngle">Use this angle</button>
+    </div>
+    <div class="step">
+      <h2>2 · Predict</h2>
+      <p>If the phone slides down this slope with no friction at all, how fast does it speed up?</p>
+      <input type="range" id="slopeGuess" min="0" max="9.8" step="0.1" value="5" aria-label="Your guess in metres per second squared">
+      <div class="live"><span class="big" id="slopeGuessOut">5.0</span><span class="unit">m/s² (your guess)</span></div>
+    </div>
+    <div class="step">
+      <h2>3 · Measure</h2>
+      <p>Put a cushion at the bottom. Press the button, then let the phone slide.</p>
+      <button id="recSlope" disabled>Record the slide</button>
+      <div id="slopeCount" class="count" hidden></div>
+      <canvas id="slopeChart" width="560" height="150" hidden></canvas>
+    </div>
+    <div class="step" id="slopeResult" hidden>
+      <h2>4 · Your physics</h2>
+      <div class="formula" id="slopeFormula"></div>
+      <div class="compare">
+        <div><span>Your guess</span><b id="sG"></b></div>
+        <div><span>Formula</span><b id="sT"></b></div>
+        <div><span>Measured</span><b id="sM"></b></div>
+      </div>
+      <p class="verdict" id="slopeVerdict"></p>
+      <p id="slopeWhy"></p>
+    </div>
+    <div class="step" id="slopeTry" hidden>
+      <h2>5 · Your turn</h2>
+      <p id="slopeQ"></p>
+      <div class="row"><input type="number" id="slopeA" step="0.01" inputmode="decimal" aria-label="Your answer"><span class="unit">m/s²</span><button class="small" id="slopeCheck">Check</button></div>
+      <p id="slopeFb"></p>
+    </div>
+  </section>
+
+  <!-- JUMP -->
+  <section class="card" id="panel-jump" hidden>
+    <div class="step">
+      <h2>1 · Predict</h2>
+      <p>How high can you jump? Guess in centimetres.</p>
+      <input type="range" id="jumpGuess" min="5" max="80" step="1" value="40" aria-label="Your guess in centimetres">
+      <div class="live"><span class="big" id="jumpGuessOut">40</span><span class="unit">cm (your guess)</span></div>
+    </div>
+    <div class="step">
+      <h2>2 · Measure</h2>
+      <p>Hold the phone tight against your chest. Press the button, wait for "Jump!", jump straight up and land on the same spot.</p>
+      <button id="recJump">Start the jump</button>
+      <div id="jumpCount" class="count" hidden></div>
+      <canvas id="jumpChart" width="560" height="150" hidden></canvas>
+      <p class="muted" id="jumpLegend" hidden>The line is what the phone feels. It drops to almost zero while you are in the air: you and the phone are weightless. The grey band is your airtime.</p>
+    </div>
+    <div class="step" id="jumpResult" hidden>
+      <h2>3 · Your physics</h2>
+      <div class="formula" id="jumpFormula"></div>
+      <div class="compare">
+        <div><span>Your guess</span><b id="jG"></b></div>
+        <div><span>Airtime</span><b id="jT"></b></div>
+        <div><span>Your jump</span><b id="jM"></b></div>
+      </div>
+      <p class="verdict" id="jumpVerdict"></p>
+      <p>You go up for half the airtime and come down for the other half. Falling for a time t covers ½·g·t², so with half the airtime: h = g·t²/8.</p>
+    </div>
+    <div class="step" id="jumpTry" hidden>
+      <h2>4 · Your turn</h2>
+      <p id="jumpQ"></p>
+      <div class="row"><input type="number" id="jumpA" step="1" inputmode="decimal" aria-label="Your answer"><span class="unit">cm</span><button class="small" id="jumpCheck">Check</button></div>
+      <p id="jumpFb"></p>
+    </div>
+  </section>
+
+  <!-- DROP -->
+  <section class="card" id="panel-drop" hidden>
+    <div class="step">
+      <h2>1 · Predict</h2>
+      <p>You drop the phone from 1 metre onto a cushion. How long does the fall take?</p>
+      <input type="range" id="dropGuess" min="0.1" max="1.5" step="0.01" value="0.80" aria-label="Your guess in seconds">
+      <div class="live"><span class="big" id="dropGuessOut">0.80</span><span class="unit">s (your guess)</span></div>
+    </div>
+    <div class="step">
+      <h2>2 · Measure</h2>
+      <p>Hold the phone 1 m above a cushion or a bed. Press the button and let go after "Drop!".</p>
+      <button id="recDrop">Start the drop</button>
+      <div id="dropCount" class="count" hidden></div>
+      <canvas id="dropChart" width="560" height="150" hidden></canvas>
+    </div>
+    <div class="step" id="dropResult" hidden>
+      <h2>3 · Your physics</h2>
+      <div class="formula" id="dropFormula"></div>
+      <div class="compare">
+        <div><span>Your guess</span><b id="dG"></b></div>
+        <div><span>Formula</span><b id="dT"></b></div>
+        <div><span>Measured</span><b id="dM"></b></div>
+      </div>
+      <p class="verdict" id="dropVerdict"></p>
+      <p>Every object falls the same way, whatever its weight: h = ½·g·t², so t = √(2h/g). A 1 m fall takes about 0.45 s.</p>
+    </div>
+    <div class="step" id="dropTry" hidden>
+      <h2>4 · Your turn</h2>
+      <p id="dropQ"></p>
+      <div class="row"><input type="number" id="dropA" step="0.01" inputmode="decimal" aria-label="Your answer"><span class="unit">s</span><button class="small" id="dropCheck">Check</button></div>
+      <p id="dropFb"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="step">
+      <h2>Your formula cards</h2>
+      <p class="muted">Finish an activity to earn its card: the formula, and when to use it.</p>
+      <div class="cards" id="cards"></div>
+    </div>
+  </section>
+
+  <p class="note">Phone sensors are good but not lab equipment: expect results within about 5–10 %. The gap between the formula and your measurement is part of the lesson. Always use a cushion for slides and drops.</p>
+  <footer>Physics of Me · prototype for the ISEN Innovation Contest 2026</footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const G = 9.81, $ = (id) => document.getElementById(id);
+  const fmt = (v, d = 2) => Number.isFinite(v) ? v.toFixed(d) : "--";
+
+  // ---------- sensor stream (real or demo) ----------
+  let gf = { x: 0, y: 0, z: G }; // low-pass gravity vector for the live angle
+  let recording = null;          // { samples: [], until }
+  let gotReal = false, demo = false, demoTimer = null, demoScene = "flat", demoT0 = 0;
+  const listeners = [];
+
+  function feed(t, x, y, z) {
+    gf = { x: gf.x * 0.85 + x * 0.15, y: gf.y * 0.85 + y * 0.15, z: gf.z * 0.85 + z * 0.15 };
+    if (recording) { recording.samples.push({ t, x, y, z }); if (t >= recording.until) finishRecording(); }
+    listeners.forEach((fn) => fn());
+  }
+  function onMotion(e) {
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.x == null) return;
+    if (!gotReal) { gotReal = true; setStatus("Sensors on", true); }
+    if (!demo) feed(performance.now(), g.x, g.y, g.z);
+  }
+
+  function setStatus(text, on) { const s = $("status"); s.textContent = text; s.classList.toggle("on", !!on); }
+
+  $("enable").addEventListener("click", async () => {
+    try {
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        const r = await DeviceMotionEvent.requestPermission();
+        if (r !== "granted") { setStatus("Permission refused: use demo data"); return; }
+      }
+      window.addEventListener("devicemotion", onMotion);
+      setStatus("Waiting for sensors…");
+      setTimeout(() => { if (!gotReal) setStatus("No motion sensor found: use demo data"); }, 1500);
+      try { await navigator.wakeLock?.request("screen"); } catch (_) {}
+    } catch (err) { setStatus("Sensors unavailable: use demo data"); }
+  });
+
+  // Demo data: realistic synthetic readings at 100 Hz, so the page also works on a laptop or a projector.
+  const noise = (a) => (Math.random() - 0.5) * a;
+  function demoSample(t) {
+    const s = (t - demoT0) / 1000, th = 20 * Math.PI / 180;
+    const flat = () => {
+      const a = th + Math.sin(t / 900) * 0.01;
+      return [G * Math.sin(a) * 0.6 + noise(.05), G * Math.sin(a) * 0.8 + noise(.05), G * Math.cos(a) + noise(.05)];
+    };
+    if (demoScene === "slide") {
+      if (s > 0.8 && s < 1.6) { const k = 0.24; return [k * G * Math.sin(th) * 0.6 + noise(.25), k * G * Math.sin(th) * 0.8 + noise(.25), G * Math.cos(th) + noise(.3)]; }
+      if (s >= 1.6 && s < 1.7) return [noise(8), noise(8), 18 + noise(4)];
+      return flat();
+    }
+    if (demoScene === "jump" || demoScene === "drop") {
+      const air = demoScene === "jump" ? 0.53 : 0.452, start = 1.2;
+      if (demoScene === "jump" && s > start - 0.25 && s < start) return [noise(1), 14 + noise(3), noise(1)];
+      if (s >= start && s < start + air) return [noise(.4), 0.3 + noise(.4), noise(.4)];
+      if (s >= start + air && s < start + air + 0.12) return [noise(3), 24 + noise(6), noise(3)];
+      return [noise(.3), G + noise(.3), noise(.3)];
+    }
+    return flat();
+  }
+  $("demo").addEventListener("click", () => {
+    demo = !demo;
+    $("demo").setAttribute("aria-pressed", String(demo));
+    $("demo").textContent = demo ? "Demo data on" : "Use demo data";
+    if (demo) {
+      setStatus("Demo data", true);
+      demoTimer = setInterval(() => { const t = performance.now(); const [x, y, z] = demoSample(t); feed(t, x, y, z); }, 10);
+    } else {
+      clearInterval(demoTimer); setStatus(gotReal ? "Sensors on" : "Sensors off", gotReal);
+    }
+  });
+
+  function record(seconds, scene, done) {
+    demoScene = scene; demoT0 = performance.now();
+    recording = { samples: [], until: performance.now() + seconds * 1000, done };
+  }
+  function finishRecording() { const r = recording; recording = null; demoScene = "flat"; r.done(r.samples); }
+  function countdown(el, words, then) {
+    el.hidden = false; let i = 0;
+    const tick = () => { el.textContent = words[i]; i++; if (i < words.length) setTimeout(tick, 700); else then(); };
+    tick();
+  }
+  const needData = () => { if (!gotReal && !demo) { setStatus("Turn on sensors or use demo data first"); return true; } return false; };
+
+  // ---------- chart ----------
+  function chart(canvas, samples, valueOf, band, refLine, label, vmax = 25) {
+    canvas.hidden = false;
+    const css = getComputedStyle(document.documentElement);
+    const fg = css.getPropertyValue("--fg").trim(), muted = css.getPropertyValue("--muted").trim(), soft = css.getPropertyValue("--line").trim();
+    const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    const c = canvas.getContext("2d"); c.scale(dpr, dpr); c.clearRect(0, 0, w, h);
+    if (!samples.length) return;
+    const t0 = samples[0].t, t1 = samples[samples.length - 1].t;
+    const X = (t) => 8 + (t - t0) / (t1 - t0 || 1) * (w - 16), Y = (v) => h - 18 - Math.min(v, vmax) / vmax * (h - 30);
+    if (band) { c.fillStyle = soft; c.fillRect(X(band[0]), 6, X(band[1]) - X(band[0]), h - 24); }
+    if (refLine != null) {
+      c.strokeStyle = muted; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(8, Y(refLine)); c.lineTo(w - 8, Y(refLine)); c.stroke(); c.setLineDash([]);
+      c.fillStyle = muted; c.font = "11px system-ui"; c.fillText("- - " + label, 10, 16);
+    }
+    c.strokeStyle = fg; c.lineWidth = 2; c.beginPath();
+    samples.forEach((s, i) => { const x = X(s.t), y = Y(valueOf(s)); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+    c.stroke();
+    c.fillStyle = muted; c.font = "11px system-ui"; c.fillText(((t1 - t0) / 1000).toFixed(1) + " s", w - 34, h - 4); c.fillText("0", 8, h - 4);
+  }
+
+  // ---------- formula cards ----------
+  const CARDS = {
+    slope: { f: "a = g · sin θ", when: "Something slides or rolls down a slope (no friction)." },
+    jump: { f: "h = g · t² / 8", when: "You know the total time in the air of a jump or throw straight up." },
+    drop: { f: "t = √(2h / g)", when: "Something is dropped from rest and falls freely." },
+  };
+  let earned = [];
+  try { earned = JSON.parse(localStorage.getItem("pom-cards") || "[]"); } catch (_) {}
+  function renderCards() {
+    $("cards").innerHTML = "";
+    Object.entries(CARDS).forEach(([k, v]) => {
+      const d = document.createElement("div"); d.className = "fcard" + (earned.includes(k) ? " got" : "");
+      d.innerHTML = earned.includes(k) ? `<code>${v.f}</code><small>Use it when: ${v.when}</small>` : `<code>? ? ?</code><small>Finish the ${k} activity to unlock.</small>`;
+      $("cards").appendChild(d);
+    });
+  }
+  function earn(k) { if (!earned.includes(k)) { earned.push(k); try { localStorage.setItem("pom-cards", JSON.stringify(earned)); } catch (_) {} renderCards(); } }
+  renderCards();
+
+  function verdict(guess, real, unit, d) {
+    const err = Math.abs(guess - real) / real;
+    if (err <= 0.1) return `Great prediction: within ${Math.round(err * 100)} % of reality.`;
+    return guess > real ? `Your guess was ${fmt(guess - real, d)} ${unit} too high.` : `Your guess was ${fmt(real - guess, d)} ${unit} too low.`;
+  }
+  function exercise(qEl, aEl, btn, fbEl, make) {
+    let cur = make(); qEl.textContent = cur.q; aEl.value = ""; fbEl.textContent = "";
+    btn.onclick = () => {
+      const v = parseFloat(String(aEl.value).replace(",", "."));
+      if (!Number.isFinite(v)) { fbEl.textContent = "Type a number first."; return; }
+      if (Math.abs(v - cur.a) / cur.a <= 0.05) { fbEl.textContent = `Correct. ${cur.how} Here is another one.`; setTimeout(() => { cur = make(); qEl.textContent = cur.q; aEl.value = ""; }, 2500); }
+      else fbEl.textContent = `Not quite. ${cur.how}`;
+    };
+  }
+
+  // ---------- tabs ----------
+  const tabs = ["slope", "jump", "drop"];
+  tabs.forEach((k) => $("tab-" + k).addEventListener("click", () => {
+    tabs.forEach((j) => { $("tab-" + j).setAttribute("aria-selected", String(j === k)); $("panel-" + j).hidden = j !== k; });
+  }));
+
+  // ---------- slope ----------
+  let theta = null, restInPlane = null;
+  const inPlane = (s) => Math.hypot(s.x, s.y);
+  listeners.push(() => {
+    const a = Math.atan2(Math.hypot(gf.x, gf.y), Math.abs(gf.z)) * 180 / Math.PI;
+    if (theta === null) {
+      $("angle").textContent = fmt(a, 1);
+      $("ramp").setAttribute("transform", `rotate(${-Math.min(a, 60)} 20 110)`);
+    }
+  });
+  $("slopeGuess").addEventListener("input", (e) => { $("slopeGuessOut").textContent = fmt(+e.target.value, 1); });
+  $("lockAngle").addEventListener("click", () => {
+    if (needData()) return;
+    if (theta === null) {
+      theta = Math.atan2(Math.hypot(gf.x, gf.y), Math.abs(gf.z));
+      restInPlane = Math.hypot(gf.x, gf.y);
+      if (theta * 180 / Math.PI < 5) { theta = null; $("lockAngle").textContent = "Tilt more than 5°, then try again"; return; }
+      $("angle").textContent = fmt(theta * 180 / Math.PI, 1);
+      $("lockAngle").textContent = "Change the angle";
+      $("recSlope").disabled = false;
+    } else { theta = null; $("lockAngle").textContent = "Use this angle"; $("recSlope").disabled = true; }
+  });
+  $("recSlope").addEventListener("click", () => {
+    if (needData()) return;
+    $("recSlope").disabled = true;
+    countdown($("slopeCount"), ["3", "2", "1", "Let go!"], () => record(3, "slide", (smp) => {
+      $("slopeCount").hidden = true; $("recSlope").disabled = false;
+      // While sliding, the phone feels less of gravity's pull along the slope. The missing part is its acceleration.
+      const sm = smp.map((s, i) => { const w = smp.slice(Math.max(0, i - 2), i + 3); return { t: s.t, v: w.reduce((a, b) => a + inPlane(b), 0) / w.length }; });
+      let best = null, run = null;
+      sm.forEach((s) => {
+        if (s.v < restInPlane * 0.8) { run = run || { a: s.t, sum: 0, n: 0 }; run.sum += s.v; run.n++; run.b = s.t; }
+        else if (run) { if (!best || run.n > best.n) best = run; run = null; }
+      });
+      if (run && (!best || run.n > best.n)) best = run;
+      chart($("slopeChart"), smp, inPlane, best && best.b - best.a > 0.1 * 1000 ? [best.a, best.b] : null, restInPlane, "pull along the slope at rest", Math.max(2, restInPlane * 2));
+      if (!best || best.b - best.a < 100) {
+        $("slopeResult").hidden = false; $("slopeFormula").textContent = "No slide detected.";
+        $("slopeVerdict").textContent = "The phone did not move. Tilt the book a little more, or use a smoother surface.";
+        $("slopeWhy").textContent = ""; return;
+      }
+      const meas = Math.max(0, restInPlane - best.sum / best.n);
+      const theo = G * Math.sin(theta), guess = +$("slopeGuess").value, deg = theta * 180 / Math.PI;
+      const mu = Math.max(0, (theo - meas) / (G * Math.cos(theta)));
+      $("slopeFormula").textContent = `a = g · sin θ = 9.81 × sin ${fmt(deg, 1)}° = ${fmt(theo)} m/s²`;
+      $("sG").textContent = fmt(guess, 1); $("sT").textContent = fmt(theo); $("sM").textContent = fmt(meas);
+      $("slopeVerdict").textContent = verdict(guess, theo, "m/s²", 1);
+      $("slopeWhy").textContent = `The phone really sped up at ${fmt(meas)} m/s², less than the formula's ${fmt(theo)}. The difference is friction: here the friction coefficient is about ${fmt(mu)}. A smoother surface would bring the measurement closer to the formula.`;
+      $("slopeResult").hidden = false; $("slopeTry").hidden = false; earn("slope");
+      exercise($("slopeQ"), $("slopeA"), $("slopeCheck"), $("slopeFb"), () => {
+        const d = [10, 15, 25, 30, 35, 40, 45][Math.floor(Math.random() * 7)], a = G * Math.sin(d * Math.PI / 180);
+        return { q: `A skateboard rolls down a ${d}° ramp with no friction. What is its acceleration?`, a, how: `a = 9.81 × sin ${d}° = ${fmt(a)} m/s².` };
+      });
+    }));
+  });
+
+  // ---------- free fall (jump and drop) ----------
+  const mag = (s) => Math.hypot(s.x, s.y, s.z);
+  function airtime(smp) {
+    let best = null, run = null;
+    smp.forEach((s) => {
+      if (mag(s) < 3) { run = run || { a: s.t }; run.b = s.t; }
+      else if (run) { if (!best || run.b - run.a > best.b - best.a) best = run; run = null; }
+    });
+    if (run && (!best || run.b - run.a > best.b - best.a)) best = run;
+    if (!best) return null;
+    const t = (best.b - best.a) / 1000;
+    return t > 0.12 && t < 1.5 ? { t, band: [best.a, best.b] } : null;
+  }
+
+  $("jumpGuess").addEventListener("input", (e) => { $("jumpGuessOut").textContent = e.target.value; });
+  $("recJump").addEventListener("click", () => {
+    if (needData()) return;
+    $("recJump").disabled = true;
+    countdown($("jumpCount"), ["3", "2", "1", "Jump!"], () => record(3, "jump", (smp) => {
+      $("jumpCount").hidden = true; $("recJump").disabled = false;
+      const r = airtime(smp);
+      chart($("jumpChart"), smp, mag, r && r.band, G, "gravity when standing (9.8)"); $("jumpLegend").hidden = false;
+      $("jumpResult").hidden = false;
+      if (!r) { $("jumpFormula").textContent = "No jump detected."; $("jumpVerdict").textContent = "Hold the phone firmly against your chest and jump as soon as you see \"Jump!\"."; return; }
+      const h = G * r.t * r.t / 8 * 100, guess = +$("jumpGuess").value;
+      $("jumpFormula").textContent = `h = g · t² / 8 = 9.81 × ${fmt(r.t)}² / 8 = ${fmt(h, 0)} cm`;
+      $("jG").textContent = guess + " cm"; $("jT").textContent = fmt(r.t) + " s"; $("jM").textContent = fmt(h, 0) + " cm";
+      $("jumpVerdict").textContent = verdict(guess, h, "cm", 0);
+      $("jumpTry").hidden = false; earn("jump");
+      exercise($("jumpQ"), $("jumpA"), $("jumpCheck"), $("jumpFb"), () => {
+        const t = +(0.4 + Math.random() * 0.35).toFixed(2), a = G * t * t / 8 * 100;
+        return { q: `A basketball player is in the air for ${t} s. How high did they jump?`, a, how: `h = 9.81 × ${t}² / 8 = ${fmt(a, 0)} cm.` };
+      });
+    }));
+  });
+
+  $("dropGuess").addEventListener("input", (e) => { $("dropGuessOut").textContent = fmt(+e.target.value); });
+  $("recDrop").addEventListener("click", () => {
+    if (needData()) return;
+    $("recDrop").disabled = true;
+    countdown($("dropCount"), ["3", "2", "1", "Drop!"], () => record(3, "drop", (smp) => {
+      $("dropCount").hidden = true; $("recDrop").disabled = false;
+      const r = airtime(smp);
+      chart($("dropChart"), smp, mag, r && r.band, G, "gravity when held still (9.8)");
+      $("dropResult").hidden = false;
+      if (!r) { $("dropFormula").textContent = "No fall detected."; $("dropVerdict").textContent = "Let go cleanly after \"Drop!\" and make sure it lands on something soft."; return; }
+      const theo = Math.sqrt(2 / G), guess = +$("dropGuess").value, hMeas = G * r.t * r.t / 2;
+      $("dropFormula").textContent = `t = √(2h / g) = √(2 × 1 / 9.81) = ${fmt(theo)} s · you measured ${fmt(r.t)} s, so a fall of ${fmt(hMeas)} m`;
+      $("dG").textContent = fmt(guess) + " s"; $("dT").textContent = fmt(theo) + " s"; $("dM").textContent = fmt(r.t) + " s";
+      $("dropVerdict").textContent = verdict(guess, theo, "s", 2);
+      $("dropTry").hidden = false; earn("drop");
+      exercise($("dropQ"), $("dropA"), $("dropCheck"), $("dropFb"), () => {
+        const h = [2, 3, 5, 10, 20][Math.floor(Math.random() * 5)], a = Math.sqrt(2 * h / G);
+        return { q: `A ball is dropped from a ${h} m balcony. How long does it take to reach the ground?`, a, how: `t = √(2 × ${h} / 9.81) = ${fmt(a)} s.` };
+      });
+    }));
+  });
+})();
+</script>
+</body>
+</html>
