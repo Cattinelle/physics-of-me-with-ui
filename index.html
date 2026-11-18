@@ -86,6 +86,16 @@ svg.fig { width: 100%; height: auto; max-width: 100%; display: block; }
 .fcard small { font-size: 13px; }
 .note { font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; margin: 0; }
 footer { color: var(--muted); font-size: 12px; text-align: center; }
+/* phones: no outer frames around whole pages, so the content uses the full width */
+@media (max-width: 560px) {
+  main { gap: 14px; }
+  .card.page { border: 0; border-radius: 0; padding: 0; }
+  #deck { border-top: 1px solid var(--line); padding-top: 14px; }
+  .cards { grid-template-columns: 1fr; }
+  .big { font-size: 38px; }
+  .count { font-size: 52px; }
+  h1 { font-size: 27px; }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
@@ -103,20 +113,20 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
     <a class="btn small ghost" id="getapp" href="physics-of-me.apk" hidden>Get the Android app</a>
   </div>
 
-  <section id="home" class="card">
+  <section id="home" class="card page">
     <p class="muted" id="coverage"></p>
     <div id="areas"></div>
   </section>
 
   <section id="screen" hidden>
-    <div class="card">
+    <div class="card page">
       <div class="row"><button class="small ghost" id="back">← All activities</button></div>
       <div><p class="muted" id="actArea"></p><h2 class="title" id="actTitle"></h2></div>
       <div id="act" style="display:grid;gap:14px"></div>
     </div>
   </section>
 
-  <section class="card">
+  <section class="card page" id="deck">
     <div class="step">
       <h4>Your formula cards</h4>
       <p class="muted">Finish an activity to earn its card: the formula, and when to use it.</p>
@@ -1085,7 +1095,7 @@ function route() {
   if (cleanup) { try { cleanup(); } catch (_) {} cleanup = null; }
   Hub.scene = { name: "idle", t0: 0 };
   const a = ACTS.find((x) => "#" + x.id === location.hash);
-  $("home").hidden = !!a; $("screen").hidden = !a;
+  $("home").hidden = !!a; $("screen").hidden = !a; $("deck").hidden = !!a;
   if (!a) { renderHome(); return; }
   $("actArea").textContent = a.area; $("actTitle").textContent = a.title;
   const miss = missing(a);
