@@ -1015,6 +1015,7 @@ function Reaction(box) {
       <p>A dropped ruler speeds up as it falls: in a time t it covers d = ½ · g · t². That is why a few hundredths of a second make a big difference on the ruler.</p>`)}</div>`
     + `<div data-r="try" hidden>${tryBlock()}</div>`;
   const q = bind(box), pad = q("pad"), times = [];
+  q.sliderOut("guess", 0);
   let state = "idle", goAt = 0, timer = 0;
   const paint = (bg, fg, text) => { pad.style.background = bg; pad.style.color = fg; pad.textContent = text; };
   const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
