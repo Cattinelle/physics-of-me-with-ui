@@ -2,6 +2,9 @@ package com.visionaries.physicsofme;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.net.Uri;
+import android.os.Build;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -33,6 +36,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,6 +94,45 @@ public class MainActivity extends Activity implements SensorEventListener {
         web.addJavascriptInterface(new Bridge(), "Native");
         web.loadUrl("file:///android_asset/www/index.html");
         ui.post(flusher);
+        checkForUpdate();
+    }
+
+    // ---- update check: compares this app with version.json on the website, offers the new APK ----
+    private static final String SITE = "https://clleb.github.io/physics-of-me/";
+
+    private long installedVersion() {
+        try {
+            android.content.pm.PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+        } catch (Exception e) { return Long.MAX_VALUE; }
+    }
+
+    private void checkForUpdate() {
+        new Thread(() -> {
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(SITE + "version.json?t=" + System.currentTimeMillis()).openConnection();
+                c.setConnectTimeout(5000); c.setReadTimeout(5000); c.setUseCaches(false);
+                if (c.getResponseCode() != 200) return;
+                StringBuilder sb = new StringBuilder();
+                try (BufferedReader r = new BufferedReader(new InputStreamReader(c.getInputStream(), "UTF-8"))) {
+                    String line; while ((line = r.readLine()) != null) sb.append(line);
+                }
+                JSONObject j = new JSONObject(sb.toString());
+                final long latest = j.optLong("versionCode", 0);
+                final String name = j.optString("versionName", "");
+                final String apk = j.optString("apk", SITE + "physics-of-me.apk");
+                if (latest <= installedVersion()) return;
+                ui.post(() -> {
+                    if (isFinishing()) return;
+                    new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Update available")
+                        .setMessage("Physics of Me " + name + " is ready. Download it now, then open the file to install it over this version (your progress is kept).")
+                        .setPositiveButton("Download", (d, w) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(apk))))
+                        .setNegativeButton("Later", null)
+                        .show();
+                });
+            } catch (Exception ignored) { /* offline or site unreachable: try again next launch */ }
+        }).start();
     }
 
     private final Runnable flusher = new Runnable() {

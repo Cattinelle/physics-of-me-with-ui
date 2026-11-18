@@ -46,4 +46,8 @@ $apk = Join-Path $Root 'physics-of-me.apk'
 if ($LASTEXITCODE) { throw 'apksigner failed' }
 & "$BT\apksigner.bat" verify $apk
 if ($LASTEXITCODE) { throw 'verify failed' }
-Write-Host ("Built {0} ({1:N0} KB)" -f $apk, ((Get-Item $apk).Length / 1KB))
+# version.json lets installed apps see that a newer APK is online (read from the manifest, so it never drifts)
+$man = [xml](Get-Content "$A\AndroidManifest.xml" -Raw)
+$ns = 'http://schemas.android.com/apk/res/android'; $vc = $man.manifest.GetAttribute('versionCode', $ns); $vn = $man.manifest.GetAttribute('versionName', $ns)
+('{{"versionCode": {0}, "versionName": "{1}", "apk": "https://clleb.github.io/physics-of-me/physics-of-me.apk"}}' -f $vc, $vn) | Set-Content -Encoding ascii (Join-Path $Root 'version.json')
+Write-Host ("Built {0} ({1:N0} KB), version {2} ({3})" -f $apk, ((Get-Item $apk).Length / 1KB), $vn, $vc)
