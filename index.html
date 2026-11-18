@@ -15,9 +15,6 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #0e0e0e; --fg: #f0f0f0; --muted: #9b9b9b; --line: #2e2e2e; --soft: #191919; --strong: #ffffff; --on-strong: #000000; color-scheme: dark; }
-}
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
@@ -40,7 +37,14 @@ button.ghost, .btn.ghost { background: transparent; color: var(--fg); }
 button.small, .btn.small { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
 button:disabled { opacity: .4; cursor: default; }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--muted); outline-offset: 2px; }
-.area { display: grid; gap: 8px; }
+/* areas with several activities take the full width; one-activity areas sit side by side */
+#areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px 8px; }
+.area { display: grid; gap: 8px; grid-column: 1 / -1; align-content: start; }
+.area.one { grid-column: auto; }
+.area.one .acts { grid-template-columns: 1fr; }
+.area.one { grid-template-rows: auto 1fr; }
+.area.one h3 { min-height: 2.6em; display: flex; align-items: flex-end; }
+.area.one .act { height: 100%; }
 .area h3 { margin: 6px 0 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .act { text-align: left; background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 2px; font-weight: 400; }
@@ -1062,12 +1066,12 @@ const ACTS = [
   { id: "cool", area: "Heat", title: "Cool down", hook: "Why hot things cool fast, then slowly", needs: ["battery"], run: Cool, card: { f: "T − T_room halves every equal time", when: "a warm object cools in a room (Newton's law of cooling)." } },
   { id: "stairs", area: "Fluids and pressure", title: "Stairs", hook: "Weigh the air above you", needs: ["pressure"], run: Stairs, card: { f: "Δh = ΔP / (ρ · g)", when: "you change height in air (ρ ≈ 1.2 kg/m³) or water (1000 kg/m³)." } },
 ];
-const AREAS = ["Mechanics", "Magnetism", "Waves and sound", "Light and electromagnetic waves", "Electricity", "Heat", "Fluids and pressure"];
+const AREAS = ["Mechanics", "Waves and sound", "Light and electromagnetic waves", "Magnetism", "Electricity", "Heat", "Fluids and pressure"];
 
 function missing(a) { return a.needs.filter((n) => !Hub.has(n)); }
 function renderHome() {
   $("coverage").textContent = `${ACTS.length} activities across 8 of the 9 areas of high-school physics: mechanics, energy (in Jump), magnetism, waves and sound, light and electromagnetic waves, electricity, heat, fluids and pressure.`;
-  $("areas").innerHTML = AREAS.map((ar) => `<div class="area"><h3>${ar}</h3><div class="acts">${ACTS.filter((a) => a.area === ar).map((a) => {
+  $("areas").innerHTML = AREAS.map((ar) => `<div class="area${ACTS.filter((a) => a.area === ar).length === 1 ? " one" : ""}"><h3>${ar}</h3><div class="acts">${ACTS.filter((a) => a.area === ar).map((a) => {
     const miss = missing(a);
     const tag = miss.length ? (Hub.mode === "native" ? `This phone has no ${SENSOR_NAMES[miss[0]]}` : `Needs the ${SENSOR_NAMES[miss[0]]}${APP_ONLY.includes(miss[0]) ? " (Android app)" : ""}`) : a.needs.map((n) => SENSOR_NAMES[n]).join(" + ");
     return `<button class="act${miss.length ? " off" : ""}" data-go="${a.id}"><b>${a.title}</b><span>${a.hook}</span><small>${tag}</small></button>`;
