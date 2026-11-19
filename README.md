@@ -5,13 +5,22 @@ measurement instrument. Users predict a result, use the phone's sensors or demo
 data to measure it, compare the result with the formula, and unlock formula cards
 as they complete activities.
 
-The project is designed for mobile learning and experimentation. It is especially
-suited to classrooms and self-guided lessons where a traditional physics
-laboratory is not available.
+The project is designed for mobile learning and experimentation in classrooms,
+self-guided lessons, and settings without access to a traditional physics
+laboratory.
 
-## What you can explore
+## Try it
 
-The activities are grouped into physics topics:
+- **Web app:** [Physics of Me](https://clleb.github.io/physics-of-me/)
+- **Android APK:** [Download the app](https://clleb.github.io/physics-of-me/physics-of-me.apk)
+- **Current Android version:** 1.3
+
+The Android app provides access to additional phone sensors. The web app works
+in supported mobile browsers and includes demo data for desktop testing.
+
+## Explore 18 activities
+
+The activities are grouped into seven areas of high-school physics:
 
 - **Mechanics:** slope acceleration, jumps, drops, lift motion, pendulums,
   circular motion, reaction time, and satellite-based running speed
@@ -32,6 +41,14 @@ Each activity follows the same learning flow:
 3. Record measurements from the phone.
 4. Compare the prediction, formula, and measured value.
 5. Complete a short practice question and earn a formula card.
+
+## Screenshots
+
+Screenshots of the app are available in
+[presentation_screenshots](presentation_screenshots):
+
+- [Experiment selection](presentation_screenshots/01_explore.png)
+- [Measurement screen](presentation_screenshots/03_measure.png)
 
 ## Running the web app
 
@@ -133,7 +150,3 @@ Use appropriate safeguards during physical experiments: add a cushion for drops
 and slides, keep the phone secured, and do not attempt unsafe or distracting
 activities while walking or moving through traffic.
 
-## License
-
-No license has been specified for this repository. Check with the project owners
-before using or redistributing it outside this project.
