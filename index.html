@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Physics of Me</title>
 <meta name="description" content="Predict, measure on yourself with your phone's sensors, and see the formula with your own numbers.">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#f7f5ed">
 <style>
-/* Layout: a home list of activities grouped by physics area; each activity is one narrow notebook page:
-   set up → predict → measure → the formula with your numbers → your turn. Black, white and greys only. */
 :root {
-  --bg: #ffffff; --fg: #111111; --muted: #686868; --line: #d6d6d6; --soft: #f2f2f2; --strong: #000000; --on-strong: #ffffff;
+  --bg: #f7f5ed; --fg: #1d4034; --muted: #65756c; --line: #dce3d9; --soft: #edf2e9; --strong: #245c46; --on-strong: #ffffff;
+  --coral: #e88770; --sunshine: #e8bd4c; --seafoam: #9dcbb5; --lavender: #ad9acb; --paper: #fffefa;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
   color-scheme: light;
@@ -19,91 +18,195 @@
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
-  background: var(--bg); color: var(--fg); font: 16px/1.45 var(--sans);
-  padding-block: max(14px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-bottom, 0px));
+  background: var(--bg); color: var(--fg); font: 16px/1.5 var(--sans);
+  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-main { max-width: 600px; margin: 0 auto; display: grid; gap: 18px; }
-header { display: grid; gap: 4px; }
-h1 { font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: -0.02em; font-weight: 800; }
-h2.title { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
-.tag { margin: 0; color: var(--muted); }
+main { max-width: 980px; margin: 0 auto; display: grid; gap: 18px; }
+header.hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 210px; align-items: center; gap: 20px; min-height: 210px; padding: 30px 34px; overflow: hidden; border: 1px solid #d6e5d7; border-radius: 26px; background: #e8f1e7; }
+.hero-copy { position: relative; z-index: 1; display: grid; gap: 8px; max-width: 610px; }
+.eyebrow { margin: 0; color: var(--strong); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.02; margin: 0; letter-spacing: -.045em; font-weight: 800; }
+h1 em { color: #b8614e; font-style: normal; }
+h2.title { font-size: 28px; margin: 0; letter-spacing: -.02em; }
+.tag { max-width: 520px; margin: 0; color: #52675b; font-size: 17px; }
 .tag b { color: var(--fg); }
-.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.pill { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
-.pill.on { color: var(--fg); border-color: var(--fg); }
-button, .btn { font: inherit; cursor: pointer; border-radius: 10px; padding: 11px 16px; border: 1.5px solid var(--fg); background: var(--strong); color: var(--on-strong); font-weight: 650; text-decoration: none; display: inline-block; text-align: center; }
-button.ghost, .btn.ghost { background: transparent; color: var(--fg); }
-button.small, .btn.small { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
-button:disabled { opacity: .4; cursor: default; }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--muted); outline-offset: 2px; }
-/* areas with several activities take the full width; one-activity areas sit side by side */
-#areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px 8px; }
-.area { display: grid; gap: 8px; grid-column: 1 / -1; align-content: start; }
-.area.one { grid-column: auto; }
+.hero-art { width: 200px; justify-self: center; overflow: visible; color: var(--strong); }
+.hero-art .orbit { transform-box: fill-box; transform-origin: center; animation: orbit-drift 16s linear infinite; }
+.hero-art .hero-dot { animation: hero-float 3.2s ease-in-out infinite; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 0 2px; }
+.pill { font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; color: var(--muted); background: var(--paper); }
+.pill.on { color: var(--strong); border-color: #b8d5c2; background: #e3f0e6; }
+button, .btn { font: inherit; cursor: pointer; border-radius: 13px; padding: 11px 17px; border: 1.5px solid var(--strong); background: var(--strong); color: var(--on-strong); font-weight: 650; text-decoration: none; display: inline-block; text-align: center; transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease; }
+button:hover:not(:disabled), .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px #1d40341c; }
+button.ghost, .btn.ghost { background: var(--paper); color: var(--strong); }
+button.small, .btn.small { padding: 8px 13px; font-size: 14px; border-radius: 10px; }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #b8614e; outline-offset: 3px; }
+#home { background: transparent; border: 0; padding: 4px 0 0; gap: 18px; }
+.explore-intro { display: grid; gap: 4px; }
+.explore-intro h2 { margin: 0; font-size: clamp(24px, 3vw, 32px); line-height: 1.2; letter-spacing: -.025em; }
+#coverage { margin: 0; }
+#areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.area { --accent: var(--seafoam); --tint: #e9f3ed; display: grid; gap: 12px; align-content: start; padding: 16px; border: 1px solid #e2e5d9; border-radius: 20px; background: var(--paper); }
+.area.wide { grid-column: 1 / -1; }
+.area.tone-coral { --accent: var(--coral); --tint: #fff0e9; }
+.area.tone-lavender { --accent: var(--lavender); --tint: #f1edf7; }
+.area.tone-sunshine { --accent: var(--sunshine); --tint: #fbf3d9; }
+.area.tone-seafoam { --accent: var(--seafoam); --tint: #e9f3ed; }
+.area.tone-green { --accent: #73a77d; --tint: #eaf2e6; }
+.area h3 { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.area h3::before { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); content: ""; }
+.area-count { margin-left: auto; color: #87948b; font: 12px var(--mono); letter-spacing: 0; }
+.acts { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 10px; }
+.area.wide .acts { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.act { min-width: 0; min-height: 174px; text-align: left; background: var(--tint); color: var(--fg); border: 1px solid transparent; border-radius: 17px; padding: 10px 12px 12px; display: grid; grid-template-rows: 76px auto 1fr auto; gap: 3px; font-weight: 400; overflow: hidden; }
+.act:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 18px #1d403413; }
+.art { width: 100%; height: 76px; color: var(--accent); }
+.art .ink { stroke: var(--fg); }
+.art .line { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.art .moving { animation: art-float 2.8s ease-in-out infinite; }
+.art .swing { transform-box: view-box; transform-origin: 50px 15px; animation: pendulum-swing 3.6s ease-in-out infinite; }
+.art .trace { stroke-dasharray: 6 6; animation: trace-flow 5s linear infinite; }
+.act b { align-self: end; font-size: 17px; line-height: 1.25; }
+.act span { font-size: 13px; line-height: 1.35; color: #52675b; }
+.act small { margin-top: 5px; width: fit-content; max-width: 100%; overflow-wrap: anywhere; border-radius: 999px; padding: 3px 8px; background: #ffffffa6; color: #607167; font: 11px/1.35 var(--sans); }
+.act.off { opacity: .82; }
 .area.one .acts { grid-template-columns: 1fr; }
-.area.one { grid-template-rows: auto 1fr; }
-.area.one h3 { min-height: 2.6em; display: flex; align-items: flex-end; }
-.area.one .act { height: 100%; }
-.area h3 { margin: 6px 0 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-.act { text-align: left; background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 2px; font-weight: 400; }
-.act b { font-size: 17px; }
-.act span { font-size: 14px; color: var(--muted); }
-.act small { font-size: 12px; color: var(--muted); font-family: var(--mono); }
-.act.off { opacity: .45; }
-.card { border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
-.step { display: grid; gap: 8px; }
-.step h4 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.area.one .act { min-height: 174px; }
+.card { border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 14px; background: var(--paper); }
+.step { display: grid; gap: 9px; padding: 15px; border: 1px solid #e5e8df; border-radius: 15px; background: #fffefa; }
+.step h4 { margin: 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--strong); font-weight: 750; }
 .step p { margin: 0; }
-.step + .step { border-top: 1px solid var(--line); padding-top: 14px; }
+.step + .step { border-top: 1px solid #e5e8df; padding-top: 15px; }
+#act { gap: 12px !important; }
 .live { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.big { font: 700 44px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.big { color: var(--strong); font: 700 44px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; transition: color .2s ease; }
 .unit { color: var(--muted); font-size: 15px; }
 .muted { color: var(--muted); font-size: 14px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .choices { display: flex; gap: 8px; flex-wrap: wrap; }
-.choices button { background: transparent; color: var(--fg); }
+.choices button { background: var(--paper); color: var(--fg); }
 .choices button[aria-pressed="true"] { background: var(--strong); color: var(--on-strong); }
-input[type=range] { width: 100%; accent-color: var(--fg); }
-input[type=number] { font: 16px var(--mono); width: 110px; padding: 9px 10px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); }
-.formula { font: 600 16px/1.5 var(--mono); background: var(--soft); border-radius: 10px; padding: 12px 14px; overflow-wrap: anywhere; }
+input[type=range] { width: 100%; accent-color: var(--strong); }
+input[type=number] { font: 16px var(--mono); width: 110px; padding: 9px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper); color: var(--fg); }
+.formula { font: 600 16px/1.5 var(--mono); background: #fbf2d9; border-radius: 12px; padding: 14px 16px; overflow-wrap: anywhere; }
 .compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.compare div { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.compare div { border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; min-width: 0; background: #fafbf7; }
+.compare div:nth-child(1) { border-color: #e9d99d; background: #fbf7e9; }
+.compare div:nth-child(2) { border-color: #d7cce8; background: #f5f1f8; }
+.compare div:nth-child(3) { border-color: #c5ddca; background: #eef5ed; }
 .compare b { display: block; font: 700 19px var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .compare span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .verdict { font-weight: 650; }
-canvas { width: 100%; height: 150px; display: block; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
-svg.fig { width: 100%; height: auto; max-width: 100%; display: block; }
-.count { font: 800 60px/1 var(--mono); text-align: center; padding: 6px 0; }
+canvas { width: 100%; height: 150px; display: block; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+svg.fig { width: 100%; height: auto; max-width: 100%; display: block; color: var(--strong); }
+.count { color: var(--strong); font: 800 60px/1 var(--mono); text-align: center; padding: 6px 0; }
+.count:not([hidden]) { animation: count-in .35s ease-out both; }
 .meter { height: 10px; border-radius: 6px; background: var(--soft); overflow: hidden; }
-.meter i { display: block; height: 100%; width: 0; background: var(--fg); }
-.pulse { width: 64px; height: 64px; border-radius: 50%; background: var(--fg); margin: 6px auto; transform: scale(.3); }
-.cards { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.fcard { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; color: var(--muted); }
-.fcard.got { border: 1.5px solid var(--fg); color: var(--fg); }
+.meter i { display: block; height: 100%; width: 0; background: var(--strong); }
+.pulse { width: 64px; height: 64px; border-radius: 50%; background: var(--coral); margin: 6px auto; transform: scale(.3); }
+.cards { display: grid; gap: 9px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.fcard { min-width: 0; border: 1px dashed #cdd8cd; border-radius: 14px; padding: 10px; display: grid; gap: 4px; color: var(--muted); background: #fafbf7; }
+.fcard.got { border: 1.5px solid #a9cdb5; color: var(--fg); background: #eaf3e9; }
+.fcard.just-unlocked { animation: card-unlock .45s ease-out both; }
 .fcard code { font: 600 15px var(--mono); }
 .fcard small { font-size: 13px; }
-.note { font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; margin: 0; }
+.card-front { min-height: 78px; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 2px 10px; color: inherit; list-style: none; cursor: pointer; }
+.card-front::-webkit-details-marker { display: none; }
+.card-front b, .card-front code, .card-front small { grid-column: 2; }
+.card-front b { align-self: end; }
+.card-front code { overflow-wrap: anywhere; }
+.card-art { grid-column: 1; grid-row: 1 / span 3; display: grid; place-items: center; width: 58px; height: 66px; padding: 3px; border-radius: 11px; background: #fffefa; color: var(--seafoam); }
+.card-art .art { width: 52px; height: 55px; }
+.fcard.locked .card-art { opacity: .58; }
+.fcard.locked b { color: var(--fg); }
+.card-back { display: grid; gap: 7px; padding: 11px 3px 3px; border-top: 1px solid #ccddcf; font-size: 13px; }
+.card-back p { margin: 0; }
+.card-back ul, .card-back ol { margin: 0; padding-left: 20px; }
+.card-own-result { display: grid; gap: 3px; padding: 8px 10px; border-radius: 10px; background: #fffefa; }
+.collection-progress { margin: -6px 0 0; color: var(--strong); font-size: 13px; font-weight: 650; }
+.result-learning { display: grid; gap: 9px; margin-top: 12px; }
+.result-meaning { display: grid; gap: 5px; padding: 14px; border-radius: 13px; background: #eaf3e9; }
+.result-meaning h4 { margin: 0; color: var(--fg); font-size: 16px; }
+.result-meaning p { margin: 0; }
+.learning-details { padding: 12px 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--paper); }
+.learning-details summary { color: var(--strong); font-weight: 700; cursor: pointer; }
+.learning-details > :not(summary) { margin-top: 9px; }
+.learning-details .formula { margin-top: 10px; }
+.takeaway { padding: 9px 11px; border-left: 3px solid var(--sunshine); background: #fbf7e9; }
+.result-actions { display: grid; gap: 8px; justify-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
+.demo-note { margin: 0; border-radius: 10px; padding: 8px 11px; background: #fbf2d9; color: #66551f; font-size: 13px; }
+.practice-progress { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; }
+.practice-progress span:first-child { color: var(--strong); font-weight: 700; }
+.practice-feedback { min-height: 1.5em; color: var(--strong); font-weight: 600; }
+.practice-actions { margin-top: 2px; }
+.milestone { position: relative; display: grid; gap: 8px; margin-top: 14px; padding: 18px; border: 1px solid #a9cdb5; border-radius: 16px; background: #eaf3e9; animation: card-unlock .45s ease-out both; }
+.milestone .eyebrow, .milestone h4, .milestone p { margin: 0; }
+.milestone h4 { color: var(--fg); font-size: 20px; }
+.milestone-check { position: absolute; top: 15px; right: 16px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--seafoam); color: var(--fg); font-size: 20px; font-weight: 800; }
+.milestone-formula { display: grid; gap: 4px; padding: 11px 13px; border-radius: 11px; background: #fffefa; }
+.milestone-formula code { font: 700 16px/1.5 var(--mono); overflow-wrap: anywhere; }
+.milestone-formula span { color: var(--muted); font-size: 13px; }
+#deck h4 { margin: 0; color: var(--strong); font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--coral); padding-left: 12px; margin: 0; }
 footer { color: var(--muted); font-size: 12px; text-align: center; }
-/* phones: no outer frames around whole pages, so the content uses the full width */
-@media (max-width: 560px) {
+@keyframes orbit-drift { to { transform: rotate(360deg); } }
+@keyframes hero-float { 50% { transform: translateY(-5px); } }
+@keyframes art-float { 50% { transform: translateY(-3px); } }
+@keyframes pendulum-swing { 0%, 100% { transform: rotate(-17deg); } 50% { transform: rotate(17deg); } }
+@keyframes trace-flow { to { stroke-dashoffset: -48; } }
+@keyframes count-in { from { opacity: .4; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes card-unlock { from { transform: scale(.97); } to { transform: scale(1); } }
+@media (max-width: 680px) {
+  body { padding-block: max(12px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-bottom, 0px)); }
   main { gap: 14px; }
-  .card.page { border: 0; border-radius: 0; padding: 0; }
-  #deck { border-top: 1px solid var(--line); padding-top: 14px; }
-  .cards { grid-template-columns: 1fr; }
+  header.hero { grid-template-columns: minmax(0, 1fr) 110px; gap: 8px; min-height: 170px; padding: 23px 20px; border-radius: 21px; }
+  .hero-art { width: 118px; }
+  .tag { font-size: 15px; }
+  #areas { gap: 10px; }
+  .area { padding: 12px; border-radius: 17px; }
+  .area.wide { grid-column: 1 / -1; }
+  .area.wide .acts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .act { min-height: 160px; grid-template-rows: 64px auto 1fr auto; padding: 8px 9px 10px; border-radius: 14px; }
+  .art { height: 64px; }
+  .act b { font-size: 15px; }
+  .act span { font-size: 12px; }
+  .act small { font-size: 10px; padding: 3px 6px; }
+  .card { padding: 15px; border-radius: 17px; }
   .big { font-size: 38px; }
   .count { font-size: 52px; }
-  h1 { font-size: 27px; }
+  .cards { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (max-width: 460px) {
+  header.hero { grid-template-columns: 1fr 76px; padding: 20px 16px; }
+  .hero-art { width: 86px; }
+  #areas { grid-template-columns: 1fr; }
+  .area.wide { grid-column: auto; }
+  .area.wide .acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .act { min-height: 156px; }
+  .compare { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>Physics of Me</h1>
-    <p class="tag"><b>Your body is the lab. Your phone is the equipment.</b> Predict, measure, then see the formula with your own numbers.</p>
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">A pocket-sized physics lab</p>
+      <h1>Physics of <em>Me</em></h1>
+      <p class="tag"><b>Your body is the lab. Your phone is the equipment.</b> Make a prediction, try an experiment, and see the physics in your own numbers.</p>
+    </div>
+    <svg class="hero-art" viewBox="0 0 220 180" aria-hidden="true">
+      <circle cx="110" cy="90" r="63" fill="#d2e6d3"/>
+      <ellipse class="orbit" cx="110" cy="90" rx="80" ry="34" fill="none" stroke="#719e7a" stroke-width="2" stroke-dasharray="4 7"/>
+      <circle cx="110" cy="90" r="25" fill="#f3cf70"/>
+      <path d="M101 90h18M110 81v18" stroke="#245c46" stroke-width="3" stroke-linecap="round"/>
+      <circle class="hero-dot" cx="174" cy="76" r="9" fill="#e88770"/>
+      <circle cx="48" cy="111" r="6" fill="#ad9acb"/>
+      <path d="M68 45l7-7m66 105 7 7" stroke="#719e7a" stroke-width="3" stroke-linecap="round"/>
+    </svg>
   </header>
 
   <div class="bar">
@@ -114,7 +217,11 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
   </div>
 
   <section id="home" class="card page">
-    <p class="muted" id="coverage"></p>
+    <div class="explore-intro">
+      <p class="eyebrow">Choose your first experiment</p>
+      <h2>Big questions. Hands-on answers.</h2>
+      <p class="muted" id="coverage"></p>
+    </div>
     <div id="areas"></div>
   </section>
 
@@ -129,7 +236,8 @@ footer { color: var(--muted); font-size: 12px; text-align: center; }
   <section class="card page" id="deck">
     <div class="step">
       <h4>Your formula cards</h4>
-      <p class="muted">Finish an activity to earn its card: the formula, and when to use it.</p>
+      <p class="muted">Finish the practice questions to unlock a card. Open any card to revisit the idea.</p>
+      <p class="collection-progress" id="cardProgress"></p>
       <div class="cards" id="cards"></div>
     </div>
   </section>
@@ -332,13 +440,40 @@ function slider(name, min, max, stp, val, unit, d) {
 }
 function choices(name, opts) { return `<div class="choices" data-r="${name}">${opts.map((o) => `<button class="small" data-v="${o[0]}" aria-pressed="false">${o[1]}</button>`).join("")}</div>`; }
 function compare(items) { return `<div class="compare">${items.map(([l, r]) => `<div><span>${l}</span><b data-r="${r}"></b></div>`).join("")}</div>`; }
-function tryBlock() { return step("Your turn", `<p data-r="q"></p><div class="row"><input type="number" data-r="a" step="any" inputmode="decimal" aria-label="Your answer"><span class="unit" data-r="aunit"></span><button class="small" data-r="check">Check</button></div><p data-r="fb"></p>`); }
+function tryBlock() {
+  return step("Your turn", `<div class="practice-progress"><span data-r="qprogress"></span><span>One question at a time</span></div>
+    <p data-r="q"></p><div class="row"><input type="number" data-r="a" step="any" inputmode="decimal" aria-label="Your answer"><span class="unit" data-r="aunit"></span></div>
+    <p class="practice-feedback" data-r="fb" role="status" aria-live="polite"></p>
+    <div class="row practice-actions"><button class="small" data-r="check">Check answer</button><button class="small ghost" data-r="skip">Show explanation</button><button class="small" data-r="next" hidden>Continue</button></div>`);
+}
 
 function bind(box) {
   const q = (n) => box.querySelector(`[data-r="${n}"]`);
   q.sliderOut = (n, d) => { const s = q(n); if (s) s.addEventListener("input", () => { q(n + "Out").textContent = (+s.value).toFixed(d); }); };
   q.choice = (n) => { const wrap = q(n); let val = null; wrap.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; val = b.dataset.v; wrap.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }); return () => val; };
-  q.show = (n, on = true) => { const el = q(n); if (el) el.hidden = !on; };
+  q.show = (n, on = true) => {
+    const el = q(n);
+    if (!el) return;
+    el.hidden = !on;
+    if (n === "res" && on && !q("res").querySelector("[data-r=resultActions]")) {
+      const actions = document.createElement("div");
+      actions.className = "result-actions";
+      actions.dataset.r = "resultActions";
+      if (Hub.demo) {
+        const demo = document.createElement("p");
+        demo.className = "demo-note";
+        demo.textContent = "Demo data · these readings are simulated, not measured from your phone.";
+        actions.appendChild(demo);
+      }
+      const repeat = document.createElement("button");
+      repeat.type = "button";
+      repeat.className = "small ghost";
+      repeat.textContent = "Repeat experiment";
+      repeat.addEventListener("click", () => route());
+      actions.appendChild(repeat);
+      el.appendChild(actions);
+    }
+  };
   return q;
 }
 
@@ -378,28 +513,161 @@ function chart(canvas, samples, valueOf, band, refLine, label, vmax, vmin = 0) {
 
 function verdict(guess, real, unit, d) {
   const err = Math.abs(guess - real) / Math.abs(real);
-  if (err <= 0.1) return `Great prediction: within ${Math.round(err * 100)} % of reality.`;
-  return guess > real ? `Your guess was ${fmt(guess - real, d)} ${unit} too high.` : `Your guess was ${fmt(real - guess, d)} ${unit} too low.`;
+  if (!Number.isFinite(err)) return `The measured value was ${fmt(real, d)} ${unit}.`;
+  if (err <= 0.1) return `Great prediction: within ${Math.round(err * 100)}% of reality.`;
+  const difference = fmt(Math.abs(guess - real), d);
+  return guess > real
+    ? `Your guess was ${difference} ${unit} too high (${Math.round(err * 100)}% away).`
+    : `Your guess was ${difference} ${unit} too low (${Math.round(err * 100)}% away).`;
 }
-function exercise(q, unit, make) {
-  q.show("try"); q("aunit").textContent = unit;
-  let cur = make(); q("q").textContent = cur.q; q("a").value = ""; q("fb").textContent = "";
-  q("check").onclick = () => {
-    const v = parseFloat(String(q("a").value).replace(",", "."));
-    if (!Number.isFinite(v)) { q("fb").textContent = "Type a number first."; return; }
-    if (Math.abs(v - cur.a) / Math.abs(cur.a) <= 0.05) { q("fb").textContent = `Correct. ${cur.how} Here is another one.`; setTimeout(() => { cur = make(); q("q").textContent = cur.q; q("a").value = ""; }, 2500); }
-    else q("fb").textContent = `Not quite. ${cur.how}`;
+function exercise(q, unit, make, activityId) {
+  q.show("try");
+  q("aunit").textContent = unit;
+  const practice = q("try");
+  const input = q("a"), feedback = q("fb"), check = q("check"), skip = q("skip"), next = q("next");
+  const questions = 3;
+  const saved = practiceStates[activityId];
+  const resumable = saved && Number.isInteger(saved.index) && saved.index >= 0 && saved.index < questions
+    && saved.question && typeof saved.question.q === "string" && typeof saved.question.how === "string" && Number.isFinite(saved.question.a);
+  let index = resumable ? saved.index : 0, attempts = resumable ? Math.max(0, saved.attempts || 0) : 0;
+  let cur = resumable ? saved.question : null, finished = false;
+  saveResult(activityId, q("res"));
+  q("res").insertAdjacentHTML("beforeend", learningMarkup(activityId));
+  const savePractice = () => {
+    practiceStates[activityId] = { index, attempts, question: cur, value: input.value, feedback: feedback.textContent, locked: input.disabled };
+    try { localStorage.setItem("pom-practice", JSON.stringify(practiceStates)); } catch (_) {}
   };
+  const loadQuestion = (resume = false) => {
+    if (!resume) { cur = make(); attempts = 0; }
+    input.disabled = resume && !!saved.locked;
+    input.value = resume ? saved.value || "" : "";
+    feedback.textContent = resume ? saved.feedback || "" : "";
+    check.disabled = input.disabled;
+    check.textContent = "Check answer";
+    skip.hidden = input.disabled;
+    next.hidden = !input.disabled;
+    q("q").textContent = cur.q;
+    q("qprogress").textContent = `Question ${index + 1} of ${questions}`;
+    savePractice();
+  };
+  const answer = () => Number.isInteger(cur.a) ? String(cur.a) : fmt(cur.a, Math.abs(cur.a) < 1 ? 3 : 2);
+  const showSolution = (prefix) => {
+    feedback.textContent = `${prefix} The answer is ${answer()} ${unit}. ${cur.how}`;
+    input.disabled = true;
+    check.disabled = true;
+    skip.hidden = true;
+    next.hidden = false;
+    savePractice();
+  };
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    input.disabled = true;
+    check.disabled = true;
+    skip.hidden = true;
+    next.hidden = true;
+    delete practiceStates[activityId];
+    try { localStorage.setItem("pom-practice", JSON.stringify(practiceStates)); } catch (_) {}
+    const alreadyEarned = earned.includes(activityId);
+    earn(activityId);
+    const spec = LEARNING[activityId], activity = ACTS.find((a) => a.id === activityId);
+    practice.insertAdjacentHTML("beforeend", `<section class="milestone" role="status" aria-live="polite">
+      <span class="milestone-check" aria-hidden="true">✓</span>
+      <p class="eyebrow">${alreadyEarned ? "In your collection" : "Formula unlocked!"}</p>
+      <h4>${escapeHtml(activity.title)} · ${alreadyEarned ? "welcome back" : "well explored"}</h4>
+      <p>You completed all ${questions} practice questions and used the physics to solve new examples.</p>
+      <div class="milestone-formula"><code>${escapeHtml(activity.card.f)}</code><span>${escapeHtml(spec.takeaway)}</span></div>
+      <div class="row"><button class="small" data-milestone="repeat">Try the experiment again</button><button class="small ghost" data-milestone="collection">See your formula cards</button></div>
+    </section>`);
+    practice.querySelector('[data-milestone="repeat"]').addEventListener("click", () => route());
+    practice.querySelector('[data-milestone="collection"]').addEventListener("click", () => {
+      window.addEventListener("hashchange", () => {
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+        $("deck").scrollIntoView({ behavior, block: "start" });
+      }, { once: true });
+      location.hash = "";
+    });
+  };
+  q("check").onclick = () => {
+    const value = parseFloat(String(input.value).replace(",", "."));
+    if (!Number.isFinite(value)) { feedback.textContent = "Enter a number first, or choose Show explanation."; savePractice(); return; }
+    if (Math.abs(value - cur.a) <= Math.max(Math.abs(cur.a) * 0.05, 0.01)) {
+      feedback.textContent = `Correct. ${cur.how}`;
+      input.disabled = true;
+      check.disabled = true;
+      skip.hidden = true;
+      next.hidden = false;
+      savePractice();
+      return;
+    }
+    attempts++;
+    if (attempts === 1) {
+      feedback.textContent = `Not quite. Hint: ${LEARNING[activityId].hint}`;
+      input.select();
+    } else showSolution("Good try.");
+    savePractice();
+  };
+  skip.onclick = () => showSolution("Here is the worked answer.");
+  next.onclick = () => {
+    if (index + 1 === questions) { finish(); return; }
+    index++;
+    loadQuestion();
+    input.focus();
+  };
+  input.addEventListener("input", savePractice);
+  loadQuestion(resumable);
 }
 const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
 
-let earned = [];
-try { earned = JSON.parse(localStorage.getItem("pom-cards") || "[]"); } catch (_) {}
-function earn(k) { if (!earned.includes(k)) { earned.push(k); try { localStorage.setItem("pom-cards", JSON.stringify(earned)); } catch (_) {} renderCards(); } }
-function renderCards() {
-  $("cards").innerHTML = ACTS.map((a) => earned.includes(a.id)
-    ? `<div class="fcard got"><code>${a.card.f}</code><small>${a.title}: use it when ${a.card.when}</small></div>`
-    : `<div class="fcard"><code>? ? ?</code><small>Finish ${a.title} to unlock.</small></div>`).join("");
+function readStorage(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch (_) { return fallback; } }
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+const storedCards = readStorage("pom-cards", []);
+let earned = Array.from(new Set((Array.isArray(storedCards) ? storedCards : []).filter((id) => typeof id === "string")));
+let lastResults = readStorage("pom-results", {});
+if (!lastResults || Array.isArray(lastResults) || typeof lastResults !== "object") lastResults = {};
+let practiceStates = readStorage("pom-practice", {});
+if (!practiceStates || Array.isArray(practiceStates) || typeof practiceStates !== "object") practiceStates = {};
+function earn(k) {
+  if (earned.includes(k)) return;
+  earned.push(k);
+  try { localStorage.setItem("pom-cards", JSON.stringify(earned)); } catch (_) {}
+  renderCards(k);
+}
+function saveResult(id, result) {
+  const values = Array.from(result.querySelectorAll(".compare div")).map((row) => ({
+    label: row.querySelector("span")?.textContent || "",
+    value: row.querySelector("b")?.textContent || "",
+  })).filter((item) => item.value);
+  lastResults[id] = { formula: result.querySelector('[data-r="formula"]')?.textContent || "", values, demo: Hub.demo };
+  try { localStorage.setItem("pom-results", JSON.stringify(lastResults)); } catch (_) {}
+  if (earned.includes(id)) renderCards();
+}
+function renderCards(newlyUnlocked) {
+  $("cardProgress").textContent = `${earned.length} of ${ACTS.length} formulas unlocked`;
+  $("cards").innerHTML = ACTS.map((a) => {
+    if (!earned.includes(a.id)) return `<div class="fcard locked"><span class="card-art">${ACTIVITY_ART[a.id]}</span><b>${a.title}</b><small>Formula card · locked</small></div>`;
+    const spec = LEARNING[a.id], result = lastResults[a.id];
+    const resultDetails = result ? `<div class="card-own-result"><b>Your last result${result.demo ? " · demo data" : ""}</b>${result.formula ? `<code>${escapeHtml(result.formula)}</code>` : ""}${(result.values || []).map((item) => `<span>${escapeHtml(item.label)}: ${escapeHtml(item.value)}</span>`).join("")}</div>` : "";
+    return `<details class="fcard got${newlyUnlocked === a.id ? " just-unlocked" : ""}">
+      <summary class="card-front"><span class="card-art">${ACTIVITY_ART[a.id]}</span><b>${escapeHtml(a.title)}</b><code>${escapeHtml(a.card.f)}</code><small>${escapeHtml(a.area)} · Unlocked · tap to revise</small></summary>
+      <div class="card-back"><p>${escapeHtml(spec.theory)}</p><p><b>Formula</b><br><code>${escapeHtml(a.card.f)}</code></p>
+        <p><b>Variables and units</b></p><ul>${spec.variables.map((v) => `<li>${escapeHtml(v)}</li>`).join("")}</ul>
+        <p><b>Use it when:</b> ${escapeHtml(a.card.when)}</p><p><b>How to apply it:</b></p><ol>${spec.steps.map((v) => `<li>${escapeHtml(v)}</li>`).join("")}</ol>
+        <p><b>Worked example:</b> ${escapeHtml(spec.example)}</p><p class="takeaway"><b>Remember:</b> ${escapeHtml(spec.takeaway)}</p>${resultDetails}</div>
+    </details>`;
+  }).join("");
+}
+function learningMarkup(id) {
+  const a = ACTS.find((activity) => activity.id === id), spec = LEARNING[id];
+  return `<section class="result-learning">
+    <div class="result-meaning"><p class="eyebrow">Make sense of it</p><h4>What your result means</h4><p>${escapeHtml(spec.result)}</p></div>
+    <details class="learning-details" open><summary>The physics behind it</summary><p>${escapeHtml(spec.theory)}</p><p class="takeaway"><b>Useful takeaway:</b> ${escapeHtml(spec.takeaway)}</p></details>
+    <details class="learning-details"><summary>Formula walkthrough</summary><div class="formula">${escapeHtml(a.card.f)}</div>
+      <p><b>Variables and units</b></p><ul>${spec.variables.map((v) => `<li>${escapeHtml(v)}</li>`).join("")}</ul>
+      <p><b>Use it when:</b> ${escapeHtml(a.card.when)}</p><p><b>How to apply it:</b></p><ol>${spec.steps.map((v) => `<li>${escapeHtml(v)}</li>`).join("")}</ol>
+      <p><b>Worked example:</b> ${escapeHtml(spec.example)}</p><p class="takeaway"><b>Remember:</b> ${escapeHtml(spec.takeaway)}</p>
+    </details>
+  </section>`;
 }
 
 // ======================= activities =======================
@@ -445,8 +713,7 @@ function Slope(box) {
       q("g1").textContent = fmt(guess, 1); q("g2").textContent = fmt(theo); q("g3").textContent = fmt(meas);
       q("verdict").textContent = verdict(guess, theo, "m/s²", 1);
       q("why").textContent = `The phone really sped up at ${fmt(meas)} m/s², less than the formula's ${fmt(theo)}. The difference is friction: the friction coefficient here is about ${fmt(mu)}.`;
-      earn("slope");
-      exercise(q, "m/s²", () => { const dg = pickOne([10, 15, 25, 30, 35, 40, 45]), a = G * Math.sin(dg * Math.PI / 180); return { q: `A skateboard rolls down a ${dg}° ramp with no friction. What is its acceleration?`, a, how: `a = 9.81 × sin ${dg}° = ${fmt(a)} m/s².` }; });
+      exercise(q, "m/s²", () => { const dg = pickOne([10, 15, 25, 30, 35, 40, 45]), a = G * Math.sin(dg * Math.PI / 180); return { q: `A skateboard rolls down a ${dg}° ramp with no friction. What is its acceleration?`, a, how: `a = 9.81 × sin ${dg}° = ${fmt(a)} m/s².` }; }, "slope");
     }));
   };
   return off;
@@ -491,8 +758,7 @@ function Jump(box) {
       q("verdict").textContent = verdict(guess, cm, "cm", 0);
       q("energy").textContent = `E = m · g · h = ${m} × 9.81 × ${fmt(h)} = ${fmt(E, 0)} J`;
       q("energyWhy").textContent = `At the top of your jump, your legs had turned ${fmt(E, 0)} joules into height (potential energy). That is about the energy to lift a 1 kg bag of sugar ${fmt(E / G, 0)} metres.`;
-      earn("jump");
-      exercise(q, "cm", () => { const t = +(0.4 + Math.random() * 0.35).toFixed(2), a = G * t * t / 8 * 100; return { q: `A basketball player is in the air for ${t} s. How high did they jump?`, a, how: `h = 9.81 × ${t}² / 8 = ${fmt(a, 0)} cm.` }; });
+      exercise(q, "cm", () => { const t = +(0.4 + Math.random() * 0.35).toFixed(2), a = G * t * t / 8 * 100; return { q: `A basketball player is in the air for ${t} s. How high did they jump?`, a, how: `h = 9.81 × ${t}² / 8 = ${fmt(a, 0)} cm.` }; }, "jump");
     }));
   };
 }
@@ -514,8 +780,8 @@ function Drop(box) {
       const h = G * r.t * r.t / 2 * 100, guess = +q("guess").value;
       q("formula").textContent = `h = ½ · g · t² = 0.5 × 9.81 × ${fmt(r.t)}² = ${fmt(h, 0)} cm`;
       q("g1").textContent = `${guess} cm`; q("g2").textContent = `${fmt(r.t)} s`; q("g3").textContent = `${fmt(h, 0)} cm`;
-      q("verdict").textContent = verdict(guess, h, "cm", 0); earn("drop");
-      exercise(q, "s", () => { const h = pickOne([2, 3, 5, 10, 20]), a = Math.sqrt(2 * h / G); return { q: `A ball is dropped from a ${h} m balcony. How long does it take to reach the ground?`, a, how: `t = √(2 × ${h} / 9.81) = ${fmt(a)} s.` }; });
+      q("verdict").textContent = verdict(guess, h, "cm", 0);
+      exercise(q, "s", () => { const h = pickOne([2, 3, 5, 10, 20]), a = Math.sqrt(2 * h / G); return { q: `A ball is dropped from a ${h} m balcony. How long does it take to reach the ground?`, a, how: `t = √(2 × ${h} / 9.81) = ${fmt(a)} s.` }; }, "drop");
     }));
   };
 }
@@ -548,8 +814,7 @@ function Lift(box) {
       const g = guess();
       q("verdict").textContent = !g ? "Pick a prediction next time, then compare." : g === "more" ? "Correct: speeding up upwards makes you heavier on the scales." : "Not quite: speeding up upwards makes you heavier on the scales.";
       if (aUp < 0.15) q("verdict").textContent += " (The ride looked very smooth: try a faster lift or a longer ride.)";
-      earn("lift");
-      exercise(q, "kg", () => { const mm = pickOne([45, 50, 55, 65, 70]), a = pickOne([0.8, 1.2, 1.5, 2]), r = mm * (G + a) / G; return { q: `A ${mm} kg student is in a lift speeding up upwards at ${a} m/s². What do the scales show?`, a: r, how: `${mm} × (9.81 + ${a}) / 9.81 = ${fmt(r, 1)} kg.` }; });
+      exercise(q, "kg", () => { const mm = pickOne([45, 50, 55, 65, 70]), a = pickOne([0.8, 1.2, 1.5, 2]), r = mm * (G + a) / G; return { q: `A ${mm} kg student is in a lift speeding up upwards at ${a} m/s². What do the scales show?`, a: r, how: `${mm} × (9.81 + ${a}) / 9.81 = ${fmt(r, 1)} kg.` }; }, "lift");
     });
   };
   return off;
@@ -594,8 +859,7 @@ function Pendulum(box) {
         q("g2").textContent = `L = ${fmt(Lfound)} m`;
         q("gmeas").textContent = `Your string is about ${fmt(Lfound * 100, 0)} cm long, measured only by timing the swing.`;
       }
-      earn("pendulum");
-      exercise(q, "s", () => { const l = pickOne([0.25, 1, 1.5, 2, 2.5, 4]), a = TAU * Math.sqrt(l / G); return { q: `A playground swing has ropes ${l} m long. How long is one full swing?`, a, how: `T = 2π × √(${l} / 9.81) = ${fmt(a)} s.` }; });
+      exercise(q, "s", () => { const l = pickOne([0.25, 1, 1.5, 2, 2.5, 4]), a = TAU * Math.sqrt(l / G); return { q: `A playground swing has ropes ${l} m long. How long is one full swing?`, a, how: `T = 2π × √(${l} / 9.81) = ${fmt(a)} s.` }; }, "pendulum");
     });
   };
 }
@@ -624,8 +888,7 @@ function Spin(box) {
       q("g1").textContent = `${fmt(w)} rad/s`; q("g2").textContent = `${fmt(a)} m/s²`; q("g3").textContent = `${fmt(rFound * 100, 0)} cm`;
       const g = guess();
       q("verdict").textContent = (!g ? "" : g === "4" ? "Your prediction was right: 4 × bigger. " : "The answer is 4 × bigger, because ω is squared. ") + `From its own readings, the phone worked out it is ${fmt(rFound * 100, 0)} cm from the centre` + (r > 0 ? ` (you measured ${fmt(r * 100, 0)} cm).` : ". Check it with a hand span: about 20 cm.");
-      earn("spin");
-      exercise(q, "m/s²", () => { const ww = pickOne([1, 1.5, 2, 2.5]), rr = pickOne([1, 1.5, 2, 3]), ac = ww * ww * rr; return { q: `A merry-go-round turns at ${ww} rad/s. A child sits ${rr} m from the centre. What is the child's acceleration?`, a: ac, how: `a = ${ww}² × ${rr} = ${fmt(ac)} m/s².` }; });
+      exercise(q, "m/s²", () => { const ww = pickOne([1, 1.5, 2, 2.5]), rr = pickOne([1, 1.5, 2, 3]), ac = ww * ww * rr; return { q: `A merry-go-round turns at ${ww} rad/s. A child sits ${rr} m from the centre. What is the child's acceleration?`, a: ac, how: `a = ${ww}² × ${rr} = ${fmt(ac)} m/s².` }; }, "spin");
     });
   };
   return off;
@@ -661,8 +924,7 @@ function Magnet(box) {
     q("g1").textContent = `${fmt(b1, 0)} µT`; q("g2").textContent = `${fmt(b2, 0)} µT`; q("g3").textContent = `${fmt(ratio, 1)} ×`;
     const g = guess();
     q("verdict").textContent = !g ? `The field dropped ${fmt(ratio, 1)} times.` : g === "8" ? `Right: ⅛. You measured ${fmt(ratio, 1)} times weaker.` : `The answer is ⅛: you measured ${fmt(ratio, 1)} times weaker.`;
-    earn("magnet");
-    exercise(q, "µT", () => { const b = pickOne([400, 600, 800, 1200]), d0 = pickOne([1, 2, 3]), a = b / 8; return { q: `At ${d0} cm a magnet gives ${b} µT. What does it give at ${d0 * 2} cm?`, a, how: `Twice as far: ${b} / 2³ = ${fmt(a, 0)} µT.` }; });
+    exercise(q, "µT", () => { const b = pickOne([400, 600, 800, 1200]), d0 = pickOne([1, 2, 3]), a = b / 8; return { q: `At ${d0} cm a magnet gives ${b} µT. What does it give at ${d0 * 2} cm?`, a, how: `Twice as far: ${b} / 2³ = ${fmt(a, 0)} µT.` }; }, "magnet");
   });
   return off;
 }
@@ -693,8 +955,7 @@ function Sound(box) {
     q("g1").textContent = `${fmt(f1, 0)} Hz`; q("g2").textContent = `${fmt(f2, 0)} Hz`; q("g3").textContent = `${fmt(343 / f1)} → ${fmt(343 / f2)} m`;
     const g = guess(), up = f2 > f1;
     q("verdict").textContent = !g ? `The note went ${up ? "up" : "down"}.` : (g === "higher") === up ? `Right: the note went ${up ? "up" : "down"}.` : `The note went ${up ? "up" : "down"}.`;
-    earn("sound");
-    exercise(q, "m", () => { const f = pickOne([110, 220, 262, 440, 880]), a = 343 / f; return { q: `A note has a frequency of ${f} Hz. What is its wavelength in air?`, a, how: `λ = 343 / ${f} = ${fmt(a)} m.` }; });
+    exercise(q, "m", () => { const f = pickOne([110, 220, 262, 440, 880]), a = 343 / f; return { q: `A note has a frequency of ${f} Hz. What is its wavelength in air?`, a, how: `λ = 343 / ${f} = ${fmt(a)} m.` }; }, "sound");
   });
   return off;
 }
@@ -722,8 +983,7 @@ function Beats(box) {
     const b = f2() - 440, guess = +q("guess").value; q.show("res");
     q("formula").textContent = `f_beat = |f₁ − f₂| = |440 − ${f2()}| = ${b} per second`;
     q("verdict").textContent = guess === b ? "Exactly right." : `You guessed ${guess}; the answer is ${b}.`;
-    earn("beats");
-    exercise(q, "per second", () => { const a = pickOne([196, 220, 330, 392]), d = pickOne([2, 3, 4, 5, 6]); return { q: `A guitar string plays ${a + d} Hz and a tuning fork plays ${a} Hz. How many beats per second?`, a: d, how: `|${a + d} − ${a}| = ${d} per second.` }; });
+    exercise(q, "per second", () => { const a = pickOne([196, 220, 330, 392]), d = pickOne([2, 3, 4, 5, 6]); return { q: `A guitar string plays ${a + d} Hz and a tuning fork plays ${a} Hz. How many beats per second?`, a: d, how: `|${a + d} − ${a}| = ${d} per second.` }; }, "beats");
   };
   return () => { Tone.stop(); cancelAnimationFrame(raf); };
 }
@@ -755,8 +1015,7 @@ function Light(box) {
     q("g1").textContent = `${fmt(l1, 0)} lx`; q("g2").textContent = `${fmt(l2, 0)} lx`; q("g3").textContent = `${fmt(ratio, 1)} ×`;
     const g = guess();
     q("verdict").textContent = !g ? `The light dropped ${fmt(ratio, 1)} times.` : g === "4" ? `Right: ¼. You measured ${fmt(ratio, 1)} times dimmer.` : `The answer is ¼: you measured ${fmt(ratio, 1)} times dimmer.`;
-    earn("light");
-    exercise(q, "lux", () => { const L = pickOne([200, 400, 800, 1600]), k = pickOne([2, 3]), a = L / (k * k); return { q: `A lamp gives ${L} lux at 1 m. How much at ${k} m?`, a, how: `${L} / ${k}² = ${fmt(a, 0)} lux.` }; });
+    exercise(q, "lux", () => { const L = pickOne([200, 400, 800, 1600]), k = pickOne([2, 3]), a = L / (k * k); return { q: `A lamp gives ${L} lux at 1 m. How much at ${k} m?`, a, how: `${L} / ${k}² = ${fmt(a, 0)} lux.` }; }, "light");
   });
   return () => { off(); if (torchOn) Native.torch(false); };
 }
@@ -779,8 +1038,7 @@ function Stairs(box) {
     q("formula").textContent = `Δh = ΔP / (ρ · g) = ${fmt(dP, 0)} / (1.2 × 9.81) = ${fmt(h, 1)} m · about ${fmt(h / fl, 1)} m per floor`;
     q("g1").textContent = `${fmt(guess, 1)} m`; q("g2").textContent = `${fmt(dP, 0)} Pa`; q("g3").textContent = `${fmt(h, 1)} m`;
     q("verdict").textContent = h > 0.5 ? verdict(guess, h, "m", 1) : "Hardly any change: climb higher, or check you captured the bottom first.";
-    earn("stairs");
-    exercise(q, "m", () => { const d = pickOne([60, 120, 240, 360]), a = d / (1.2 * G); return { q: `The air pressure drops by ${d} Pa from the bottom to the top of a tower. How tall is it?`, a, how: `${d} / (1.2 × 9.81) = ${fmt(a, 1)} m.` }; });
+    exercise(q, "m", () => { const d = pickOne([60, 120, 240, 360]), a = d / (1.2 * G); return { q: `The air pressure drops by ${d} Pa from the bottom to the top of a tower. How tall is it?`, a, how: `${d} / (1.2 × 9.81) = ${fmt(a, 1)} m.` }; }, "stairs");
   });
   return off;
 }
@@ -810,8 +1068,7 @@ function Charge(box) {
       q("g1").textContent = `${fmt(guess, 1)} W`; q("g2").textContent = `${fmt(P, 1)} W`;
       q("g3").textContent = !last.z ? "not charging" : Number.isFinite(mins) ? `${Math.floor(mins / 60)} h ${Math.round(mins % 60)} min` : "unknown";
       q("verdict").textContent = verdict(guess, P, "W", 1) + ` In one hour at this rate, ${fmt(P, 1)} Wh of energy flows in: enough to lift a 60 kg person ${fmt(P * 3600 / (60 * G), 0)} m high.`;
-      earn("charge");
-      exercise(q, "W", () => { const v = pickOne([5, 9, 12]), i = pickOne([1, 1.5, 2, 3]), p = v * i; return { q: `A charger supplies ${v} V at ${i} A. What power does it deliver?`, a: p, how: `P = ${v} × ${i} = ${fmt(p, 1)} W.` }; });
+      exercise(q, "W", () => { const v = pickOne([5, 9, 12]), i = pickOne([1, 1.5, 2, 3]), p = v * i; return { q: `A charger supplies ${v} V at ${i} A. What power does it deliver?`, a: p, how: `P = ${v} × ${i} = ${fmt(p, 1)} W.` }; }, "charge");
     });
   };
   return () => { off1(); off2(); };
@@ -864,8 +1121,7 @@ function Cool(box) {
     q("g1").textContent = `${fmt(T0, 1)} °C`; q("g2").textContent = `${fmt(T1, 1)} °C`; q("g3").textContent = k > 0 ? `${fmt(half / 60, 1)} min` : "--";
     const g = guess();
     q("verdict").textContent = !g ? "" : g === "start" ? "Right: it cools fastest at the start, when it is hottest." : "It cools fastest at the start, when the gap to room temperature is biggest.";
-    if (k > 0) earn("cool");
-    exercise(q, "°C", () => { const T0 = pickOne([60, 80, 90]), h = pickOne([5, 10, 15]), n = pickOne([1, 2, 3]), a = 20 + (T0 - 20) / 2 ** n; return { q: `A cup of tea at ${T0} °C sits in a 20 °C room. The gap to room temperature halves every ${h} min. What is its temperature after ${h * n} min?`, a, how: `The gap ${T0 - 20} °C halves ${n} time${n > 1 ? "s" : ""}: 20 + ${T0 - 20} / ${2 ** n} = ${fmt(a, 1)} °C.` }; });
+    if (k > 0) exercise(q, "°C", () => { const T0 = pickOne([60, 80, 90]), h = pickOne([5, 10, 15]), n = pickOne([1, 2, 3]), a = 20 + (T0 - 20) / 2 ** n; return { q: `A cup of tea at ${T0} °C sits in a 20 °C room. The gap to room temperature halves every ${h} min. What is its temperature after ${h * n} min?`, a, how: `The gap ${T0 - 20} °C halves ${n} time${n > 1 ? "s" : ""}: 20 + ${T0 - 20} / ${2 ** n} = ${fmt(a, 1)} °C.` }; }, "cool");
   };
   return () => { off(); clearInterval(iv); };
 }
@@ -892,8 +1148,7 @@ function Wifi(box) {
     q("g1").textContent = `${fmt(vals[1], 0)} dBm`; q("g2").textContent = `${fmt(vals[2], 0)} dBm`; q("g3").textContent = `${fmt(vals[4], 0)} dBm`;
     const g = guess();
     q("verdict").textContent = (!g ? "" : g === "6" ? "Right: about 6 dB in free space. " : "In free space it is 6 dB. ") + `Your average drop per doubling: ${fmt(avg, 1)} dB.`;
-    earn("wifi");
-    exercise(q, "dBm", () => { const s = pickOne([-40, -45, -50]), n = pickOne([1, 2, 3]), a = s - 6 * n; return { q: `At 2 m the signal is ${s} dBm. In open space, what is it at ${2 * 2 ** n} m?`, a, how: `${n} doubling${n > 1 ? "s" : ""}: ${s} − 6 × ${n} = ${a} dBm.` }; });
+    exercise(q, "dBm", () => { const s = pickOne([-40, -45, -50]), n = pickOne([1, 2, 3]), a = s - 6 * n; return { q: `At 2 m the signal is ${s} dBm. In open space, what is it at ${2 * 2 ** n} m?`, a, how: `${n} doubling${n > 1 ? "s" : ""}: ${s} − 6 × ${n} = ${a} dBm.` }; }, "wifi");
   }
   return off;
 }
@@ -920,8 +1175,8 @@ function Run(box) {
     if (p.length < 3 || d < 5) { q("formula").textContent = "Not enough GPS positions."; q("verdict").textContent = "Wait until the accuracy is under 10 m, then go further (at least 50 m)."; return; }
     q("formula").textContent = `v = d / t = ${fmt(d, 0)} m / ${fmt(t, 0)} s = ${fmt(v)} m/s = ${fmt(v * 3.6, 1)} km/h`;
     q("g1").textContent = `${fmt(d, 0)} m`; q("g2").textContent = `${fmt(t, 0)} s`; q("g3").textContent = `${fmt(top * 3.6, 1)} km/h`;
-    q("verdict").textContent = verdict(guess, v * 3.6, "km/h", 1); earn("run");
-    exercise(q, "km/h", () => { const dd = pickOne([100, 200, 400]), tt = pickOne([14, 16, 20, 25]) * dd / 100, a = dd / tt * 3.6; return { q: `You run ${dd} m in ${tt} s. What is your average speed in km/h?`, a, how: `${dd} / ${tt} = ${fmt(dd / tt)} m/s, × 3.6 = ${fmt(a, 1)} km/h.` }; });
+    q("verdict").textContent = verdict(guess, v * 3.6, "km/h", 1);
+    exercise(q, "km/h", () => { const dd = pickOne([100, 200, 400]), tt = pickOne([14, 16, 20, 25]) * dd / 100, a = dd / tt * 3.6; return { q: `You run ${dd} m in ${tt} s. What is your average speed in km/h?`, a, how: `${dd} / ${tt} = ${fmt(dd / tt)} m/s, × 3.6 = ${fmt(a, 1)} km/h.` }; }, "run");
   };
   return () => { off1(); off2(); clearInterval(iv); };
 }
@@ -953,8 +1208,8 @@ function Gate(box) {
       const T = 2 * median(gaps), g = 4 * Math.PI * Math.PI * L / (T * T), guess = +q("guess").value, Lf = G * T * T / (4 * Math.PI * Math.PI);
       q("formula").textContent = known ? `T = 2 × ${fmt(T / 2)} s = ${fmt(T)} s → g = 4π² × ${fmt(L)} / ${fmt(T)}² = ${fmt(g)} m/s²` : `T = 2 × ${fmt(T / 2)} s = ${fmt(T)} s → string length L = g · T² / 4π² = ${fmt(Lf)} m`;
       q("g1").textContent = passes.length; q("g2").textContent = `${fmt(T)} s`; q("g3").textContent = known ? `g = ${fmt(g)} m/s²` : `L = ${fmt(Lf * 100, 0)} cm`;
-      q("verdict").textContent = verdict(guess, T, "s", 2); earn("gate");
-      exercise(q, "m", () => { const gap = pickOne([0.6, 0.7, 0.8, 1.0]), T2 = 2 * gap, a = G * T2 * T2 / (4 * Math.PI * Math.PI); return { q: `Keys on a string cross a light gate every ${gap} s. How long is the string?`, a, how: `T = 2 × ${gap} = ${fmt(T2, 1)} s, L = g · T² / 4π² = ${fmt(a)} m.` }; });
+      q("verdict").textContent = verdict(guess, T, "s", 2);
+      exercise(q, "m", () => { const gap = pickOne([0.6, 0.7, 0.8, 1.0]), T2 = 2 * gap, a = G * T2 * T2 / (4 * Math.PI * Math.PI); return { q: `Keys on a string cross a light gate every ${gap} s. How long is the string?`, a, how: `T = 2 × ${gap} = ${fmt(T2, 1)} s, L = g · T² / 4π² = ${fmt(a)} m.` }; }, "gate");
     });
   };
   return off;
@@ -1005,8 +1260,7 @@ function Echo(box) {
       q("g3").textContent = `wall at ${fmt(d2, 1)} m`;
       q("verdict").textContent = verdict(guess, 343, "m/s", 0) + ` Sound travels at 343 m/s, so the echo tells you the wall is ${fmt(d2, 1)} m away. Walk there counting steps to check.`;
     }
-    earn("echo");
-    exercise(q, "m", () => { const t = pickOne([0.3, 0.5, 0.8, 1.2]), a = 343 * t / 2; return { q: `You shout towards a cliff and hear the echo ${t} s later. How far away is the cliff?`, a, how: `d = 343 × ${t} / 2 = ${fmt(a, 0)} m.` }; });
+    exercise(q, "m", () => { const t = pickOne([0.3, 0.5, 0.8, 1.2]), a = 343 * t / 2; return { q: `You shout towards a cliff and hear the echo ${t} s later. How far away is the cliff?`, a, how: `d = 343 × ${t} / 2 = ${fmt(a, 0)} m.` }; }, "echo");
   };
   q("rec").onclick = () => {
     if (!Hub.demo && !(window.Native && Native.echoReady())) { q("micmsg").textContent = "Allow the microphone, then press the button again."; return; }
@@ -1048,8 +1302,8 @@ function Reaction(box) {
       const t = mean(times) / 1000, d = G * t * t / 2, guess = +q("guess").value; q.show("res");
       q("formula").textContent = `d = ½ · g · t² = 0.5 × 9.81 × ${fmt(t, 3)}² = ${fmt(d * 100, 1)} cm`;
       q("g1").textContent = `${guess} ms`; q("g2").textContent = `${fmt(t * 1000, 0)} ms`; q("g3").textContent = `${fmt(d * 100, 1)} cm`;
-      q("verdict").textContent = verdict(guess, t * 1000, "ms", 0); earn("reaction");
-      exercise(q, "s", () => { const cm = pickOne([5, 8, 12, 15, 20]), a = Math.sqrt(2 * cm / 100 / G); return { q: `A friend catches a dropped ruler after it has fallen ${cm} cm. What was their reaction time?`, a, how: `t = √(2d / g) = √(2 × ${cm / 100} / 9.81) = ${fmt(a, 3)} s.` }; });
+      q("verdict").textContent = verdict(guess, t * 1000, "ms", 0);
+      exercise(q, "s", () => { const cm = pickOne([5, 8, 12, 15, 20]), a = Math.sqrt(2 * cm / 100 / G); return { q: `A friend catches a dropped ruler after it has fallen ${cm} cm. What was their reaction time?`, a, how: `t = √(2d / g) = √(2 × ${cm / 100} / 9.81) = ${fmt(a, 3)} s.` }; }, "reaction");
     }
   });
   return () => clearTimeout(timer);
@@ -1073,19 +1327,211 @@ const ACTS = [
   { id: "light", area: "Light and electromagnetic waves", title: "Light", hook: "How light fades with distance", needs: ["light"], run: Light, card: { f: "I ∝ 1 / d²", when: "you move away from a small light source." } },
   { id: "wifi", area: "Light and electromagnetic waves", title: "Wi-Fi", hook: "An invisible wave you can measure", needs: ["wifi"], run: Wifi, card: { f: "−6 dB per doubling (P ∝ 1 / d²)", when: "a radio wave spreads out in open space." } },
   { id: "charge", area: "Electricity", title: "Charge", hook: "How many watts flow into your phone?", needs: ["battery"], run: Charge, card: { f: "P = V · I", when: "you know the voltage and the current." } },
-  { id: "cool", area: "Heat", title: "Cool down", hook: "Why hot things cool fast, then slowly", needs: ["battery"], run: Cool, card: { f: "T − T_room halves every equal time", when: "a warm object cools in a room (Newton's law of cooling)." } },
+  { id: "cool", area: "Heat", title: "Cool down", hook: "Why hot things cool fast, then slowly", needs: ["battery"], run: Cool, card: { f: "T(t) = T_room + (T₀ − T_room) · e^(−t/τ)", when: "a warm object cools in a room (Newton's law of cooling)." } },
   { id: "stairs", area: "Fluids and pressure", title: "Stairs", hook: "Weigh the air above you", needs: ["pressure"], run: Stairs, card: { f: "Δh = ΔP / (ρ · g)", when: "you change height in air (ρ ≈ 1.2 kg/m³) or water (1000 kg/m³)." } },
 ];
+const LEARNING = {
+  slope: {
+    result: "Compare your measured acceleration with the ideal value. A smaller reading is expected when friction slows the phone on the ramp.",
+    theory: "Gravity pulls the phone down, but only the part parallel to the slope makes it speed up along the ramp. Friction pushes the other way, so a real phone usually accelerates less than the friction-free prediction.",
+    hint: "Find the part of gravity along the ramp using the sine of its angle.",
+    takeaway: "The ideal slope formula ignores friction; real surfaces usually reduce the acceleration.",
+    variables: ["a — acceleration along the ramp (m/s²)", "g — gravitational acceleration (9.81 m/s²)", "θ — angle of the ramp above horizontal (degrees)"],
+    steps: ["Measure or read the ramp angle θ.", "Calculate sin θ.", "Multiply by g to get the ideal acceleration, then compare with your measured value."],
+    example: "At 30°, a = 9.81 × sin 30° ≈ 4.9 m/s².",
+  },
+  jump: {
+    result: "Your phone finds the time you were in the air. The formula turns that airtime into jump height; small timing errors can noticeably change the height.",
+    theory: "On the way up, gravity slows you until you briefly stop at the top. The way down takes the same time if you land at your take-off height, so half the airtime is the upward journey.",
+    hint: "Use half the total airtime for the upward trip, then square that time.",
+    takeaway: "Height depends on airtime squared, so a small timing error can change the answer.",
+    variables: ["h — jump height above take-off (m)", "g — gravitational acceleration (9.81 m/s²)", "t — total time in the air (s)", "E — gravitational potential energy at the top (J)", "m — your mass (kg)"],
+    steps: ["Convert the measured airtime to seconds.", "Use h = g × t² / 8 to estimate height.", "If wanted, multiply mass × g × height to estimate energy."],
+    example: "For 0.60 s in the air, h = 9.81 × 0.60² / 8 ≈ 0.44 m (44 cm).",
+  },
+  drop: {
+    result: "The measured fall time acts like a ruler: the longer the fall, the farther the phone travelled. A clean release and soft landing help the sensor find the true free-fall interval.",
+    theory: "A dropped object starts from rest and gains speed because gravity keeps pulling it down. That means its distance grows with the square of the time, not in a straight-line way.",
+    hint: "The time is squared in the height formula. Check whether you need height or time, then rearrange if needed.",
+    takeaway: "In free fall from rest, doubling the time makes the distance four times larger.",
+    variables: ["h — drop height (m)", "g — gravitational acceleration (9.81 m/s²)", "t — time spent falling (s)"],
+    steps: ["Measure the free-fall time in seconds.", "Square the time.", "Multiply by half of g to get the height."],
+    example: "A 0.55 s fall gives h = 0.5 × 9.81 × 0.55² ≈ 1.5 m.",
+  },
+  lift: {
+    result: "The sensor tracks how strongly the lift floor pushes on the phone. Starting upwards increases that push; slowing down at the top reduces it. A smooth lift may make the change hard to detect.",
+    theory: "A scale measures the support force, not gravity itself. When you accelerate upwards, the floor must push harder than usual; when you accelerate downwards, it pushes less.",
+    hint: "A scale reads force. Compare the extra force with ordinary weight, m × g.",
+    takeaway: "You feel heavier or lighter because the support force changes, not because your mass changes.",
+    variables: ["N — support force from the floor (N)", "m — mass (kg)", "g — gravitational acceleration (9.81 m/s²)", "a — lift acceleration, positive upwards (m/s²)"],
+    steps: ["Choose a positive direction (here, upwards).", "Add the signed lift acceleration to g.", "Multiply by mass to find the support force; divide by g for a scale's kg-equivalent reading."],
+    example: "For 60 kg accelerating upwards at 1 m/s², N = 60 × (9.81 + 1) ≈ 649 N, or about 66 kg on a scale.",
+  },
+  pendulum: {
+    result: "A longer measured period means a slower swing. If you entered the string length, the app can estimate gravity; if you left it blank, it uses gravity to estimate the length.",
+    theory: "A pendulum trades height for motion as it swings. For small swings, its period mainly depends on the string length and gravity—not on the phone's mass.",
+    hint: "Put the length in metres and the period in seconds. Longer strings have longer periods.",
+    takeaway: "The simple pendulum formula assumes a small swing and a light, flexible string.",
+    variables: ["T — time for one full swing (s)", "L — pivot-to-centre length (m)", "g — gravitational acceleration (m/s²)"],
+    steps: ["Measure one full period, from one side and back again.", "Convert the string length to metres.", "Substitute T and L; rearrange to find g if length is known, or L if it is not."],
+    example: "For a 0.80 m string, T = 2π × √(0.80 / 9.81) ≈ 1.8 s.",
+  },
+  gate: {
+    result: "The proximity sensor sees each pass of the swinging keys. Two passes make one full swing; missed or extra passes can make the estimated period unreliable.",
+    theory: "The keys cross the sensor on both sides of their path. Doubling the gap between consecutive passes gives the full period, which can then be related to string length and gravity.",
+    hint: "First turn the time between neighbouring passes into the full period.",
+    takeaway: "A light gate times motion without touching it, but it must register each pass cleanly.",
+    variables: ["Δt — time between neighbouring passes (s)", "T — full swing period, 2 × Δt (s)", "L — string length (m)", "g — gravitational acceleration (m/s²)"],
+    steps: ["Find the time gap between passes.", "Double that gap to get one full period.", "Use T = 2π√(L/g), rearranging for the unknown length or gravity."],
+    example: "If passes are 0.40 s apart, T = 0.80 s. For L = 0.16 m, g = 4π² × 0.16 / 0.80² ≈ 9.9 m/s².",
+  },
+  spin: {
+    result: "The faster the phone spins, the larger its inward acceleration. The formula also lets the phone estimate its distance from the chair's centre.",
+    theory: "Even at constant speed, something moving in a circle is continually changing direction. That change needs an acceleration towards the centre, and it grows with the square of spin speed.",
+    hint: "Convert turns per minute to radians per second if needed, and remember to square the spin speed.",
+    takeaway: "Doubling angular speed makes the required inward acceleration four times larger.",
+    variables: ["a — inward (centripetal) acceleration (m/s²)", "ω — angular speed (rad/s)", "r — distance from the centre (m)"],
+    steps: ["Measure angular speed in radians per second.", "Square ω.", "Multiply by radius r to find the inward acceleration."],
+    example: "At 2 rad/s and 0.50 m from the centre, a = 2² × 0.50 = 2.0 m/s².",
+  },
+  reaction: {
+    result: "The screen measures your average response across five tries. The falling distance is calculated from that time; a quick tap is not perfectly identical to catching a real ruler.",
+    theory: "The screen waits a random time, then changes. Your response time is the time the ruler would have been falling, and gravity tells us how far it falls in that time.",
+    hint: "Rearrange the free-fall distance equation to make time the subject; take a square root at the end.",
+    takeaway: "A few hundredths of a second matter because the falling distance depends on time squared.",
+    variables: ["d — distance the ruler falls (m)", "t — reaction time (s)", "g — gravitational acceleration (9.81 m/s²)"],
+    steps: ["Convert the reaction time from milliseconds to seconds.", "Square the time.", "Multiply by half of g to find the ruler's falling distance."],
+    example: "A 0.20 s reaction gives d = 0.5 × 9.81 × 0.20² ≈ 0.20 m.",
+  },
+  run: {
+    result: "The GPS trace gives distance and elapsed time, while the phone also reports top speed. GPS accuracy, turns, and pauses can affect the result, so use a longer straight route for a steadier average.",
+    theory: "Average speed is total distance divided by total time. GPS estimates position from satellites, then the app adds up the path between reliable position fixes.",
+    hint: "Divide metres by seconds first. Multiply metres per second by 3.6 to get kilometres per hour.",
+    takeaway: "Average speed and top speed are different: one describes the whole route, the other a brief peak.",
+    variables: ["v — average speed (m/s, or km/h after conversion)", "d — distance travelled (m)", "t — elapsed time (s)"],
+    steps: ["Add up the distance between reliable GPS points.", "Divide distance by elapsed time to get m/s.", "Multiply by 3.6 to convert m/s to km/h."],
+    example: "Running 200 m in 40 s gives 5 m/s, or 5 × 3.6 = 18 km/h.",
+  },
+  magnet: {
+    result: "The field readings are compared after subtracting Earth's background field. The exact ratio may differ from eight because a fridge magnet is not a perfect point source and hand spacing is approximate.",
+    theory: "A small magnet's field spreads out in three dimensions. In the far field, doubling the distance makes the field roughly one eighth as strong; close to the magnet, the simple model is less exact.",
+    hint: "The distance is cubed, so doubling it changes the field by a factor of 2³.",
+    takeaway: "The inverse-cube rule is an approximation for a small magnet measured away from its surface.",
+    variables: ["B — magnetic field strength above the background (µT)", "d — distance from the magnet (same units in both readings)", "B ∝ 1/d³ — proportional relationship, not an exact field formula"],
+    steps: ["Keep the phone orientation fixed and note the background field.", "Measure the magnet's extra field at two distances.", "Compare the readings; doubling distance predicts about one eighth the field."],
+    example: "If the extra field is 80 µT at one spacing, twice as far predicts about 80 / 2³ = 10 µT.",
+  },
+  sound: {
+    result: "The microphone estimates each bottle's pitch. A shorter air space usually resonates at a higher frequency, which means a shorter wavelength for sound travelling at the same speed.",
+    theory: "Sound is a travelling vibration. In the same air, its speed is nearly fixed, so frequency and wavelength trade off: more vibrations per second means less distance per wave.",
+    hint: "Use the speed of sound divided by the frequency in hertz; hertz means cycles per second.",
+    takeaway: "At a fixed sound speed, higher frequency means shorter wavelength.",
+    variables: ["λ — wavelength (m)", "v — speed of sound in air (about 343 m/s)", "f — frequency (Hz, or s⁻¹)"],
+    steps: ["Read the measured frequency in hertz.", "Use the speed of sound for the same medium.", "Divide speed by frequency to find wavelength."],
+    example: "A 440 Hz tone in air has λ = 343 / 440 ≈ 0.78 m.",
+  },
+  beats: {
+    result: "The slow pulse is the beat frequency: how often the combined sound grows louder and softer. Moving the slider changes the gap between the two notes.",
+    theory: "Two nearly matching waves sometimes reinforce each other and sometimes cancel. The number of loud-soft cycles per second is the difference between their frequencies.",
+    hint: "Count the frequency gap between the notes; use an absolute difference, not their total.",
+    takeaway: "When two notes match exactly, the beat disappears.",
+    variables: ["f₁, f₂ — the two note frequencies (Hz)", "fbeat — beat frequency (Hz, equal to beats per second)"],
+    steps: ["Write down both note frequencies.", "Subtract the smaller from the larger.", "The difference is the number of beats each second."],
+    example: "Notes at 440 Hz and 443 Hz make |443 − 440| = 3 beats per second.",
+  },
+  light: {
+    result: "Compare the extra light from the torch at one and two phone-lengths. The room-light reading is subtracted first; stray light and imperfect aiming can change the ratio.",
+    theory: "Light from a small source spreads over a larger area as it travels. At twice the distance, that area is about four times larger, so the brightness at one spot falls to about a quarter.",
+    hint: "The distance is squared. Work out the distance multiplier before applying its square.",
+    takeaway: "The inverse-square rule assumes a small source and no nearby reflections or obstacles.",
+    variables: ["I — light intensity (lux for this sensor)", "d — distance from the light source (m or another consistent unit)", "I ∝ 1/d² — relative intensity relationship"],
+    steps: ["Subtract the room-light background from both readings.", "Compare the two distances.", "Square the distance multiplier; intensity changes by its reciprocal."],
+    example: "If a lamp gives 800 lux at 1 m, the ideal value at 2 m is 800 / 2² = 200 lux.",
+  },
+  wifi: {
+    result: "The app compares Wi-Fi signal strength at increasing step distances. Walls, people, reflections, and router direction can make indoor readings drop more or less than the free-space estimate.",
+    theory: "Radio waves spread out much like light. In open space, doubling distance gives about one quarter the power; on the logarithmic dB scale, that is roughly a 6 dB drop.",
+    hint: "Count the distance doublings, then subtract about 6 dB for each one.",
+    takeaway: "dBm is logarithmic: a 6 dB drop is about one quarter of the received power, not a small linear change.",
+    variables: ["d₁, d₂ — distances from the router (same unit)", "ΔRSSI — change in received signal level (dB)", "RSSI — received signal strength (dBm)"],
+    steps: ["Find how many times the distance doubled.", "For each doubling, expect roughly 6 dB less signal in open space.", "Compare that estimate with the measured dBm change."],
+    example: "A reading of −40 dBm at 2 m is about −46 dBm at 4 m in ideal open space.",
+  },
+  charge: {
+    result: "Voltage and current give the battery's electrical power at the time of recording. Phone charging varies constantly, and battery-side current is not always the same as the charger's labelled output.",
+    theory: "Voltage is energy transferred per unit of charge; current is charge flowing each second. Multiplying them gives the rate energy is transferred: power.",
+    hint: "Make sure current is in amperes before multiplying by volts.",
+    takeaway: "The phone's battery-side reading can differ from the charger's rated output and changes as the battery fills.",
+    variables: ["P — electrical power (W)", "V — voltage (V)", "I — current (A)"],
+    steps: ["Read voltage in volts.", "Convert current to amperes if it is shown in milliamps (divide by 1000).", "Multiply voltage by current."],
+    example: "At 9 V and 2 A, P = 9 × 2 = 18 W.",
+  },
+  cool: {
+    result: "The temperature trace shows the phone cooling fastest while it is farthest above room temperature. A short or nearly flat trace cannot reliably reveal a cooling rate.",
+    theory: "Heat flows from the warmer phone to the cooler room. As their temperatures get closer, the difference shrinks and the cooling slows down.",
+    hint: "Track the gap above room temperature, not the phone's total temperature.",
+    takeaway: "Newton's cooling model describes the temperature difference shrinking exponentially; the room temperature is the baseline.",
+    variables: ["T(t) — phone temperature after time t (°C)", "Troom — room temperature (°C)", "T₀ — starting phone temperature (°C)", "τ — cooling time constant (same time unit as t)", "t½ — time for the temperature gap to halve"],
+    steps: ["Find the room temperature or estimate it from a long trace.", "Subtract room temperature from the phone's temperature.", "Compare that gap over equal time intervals; each interval should reduce it by a similar fraction."],
+    example: "A phone cooling from 40°C in a 20°C room has a 20°C gap. After one half-time, the gap is 10°C and the phone is about 30°C.",
+  },
+  stairs: {
+    result: "The barometer measures a small pressure drop as you climb. Because the change is tiny, weather shifts, indoor airflow, or a short climb can outweigh the height signal.",
+    theory: "Air pressure is the weight of the air above you. Higher up there is a little less air overhead, so pressure falls; air density is needed to turn that pressure change into height.",
+    hint: "Convert hPa to pascals first (1 hPa = 100 Pa), then divide by air density times gravity.",
+    takeaway: "This height estimate assumes roughly steady air density and weather during both readings.",
+    variables: ["Δh — change in height (m)", "ΔP — pressure change (Pa)", "ρ — air density (about 1.2 kg/m³)", "g — gravitational acceleration (9.81 m/s²)"],
+    steps: ["Subtract top pressure from bottom pressure.", "Convert the pressure difference from hPa to Pa.", "Divide by air density × gravity."],
+    example: "A 108 Pa drop gives Δh = 108 / (1.2 × 9.81) ≈ 9.2 m.",
+  },
+  echo: {
+    result: "The microphone finds the clap and its returning echo. The sound travels to the wall and back, so the travelled distance is twice the wall distance; background noise can hide the echo.",
+    theory: "An echo gives a round-trip time. If the wall distance is known, that time gives sound speed; if sound speed is known, it gives the wall distance.",
+    hint: "The sound covers the wall distance twice. Keep that factor of two in the equation.",
+    takeaway: "Use the echo delay only; do not include the time of the original clap.",
+    variables: ["v — speed of sound (m/s)", "d — one-way distance to the wall (m)", "t — echo round-trip time (s)"],
+    steps: ["Measure the time from the clap to its echo.", "Double the wall distance to get the sound's round trip.", "Divide round-trip distance by time, or rearrange to find distance."],
+    example: "A wall 10 m away gives a round trip of 20 m. If the echo returns in 0.058 s, v ≈ 20 / 0.058 = 345 m/s.",
+  },
+};
 const AREAS = ["Mechanics", "Waves and sound", "Light and electromagnetic waves", "Magnetism", "Electricity", "Heat", "Fluids and pressure"];
+const AREA_TONES = {
+  "Mechanics": "coral", "Waves and sound": "lavender", "Light and electromagnetic waves": "sunshine",
+  "Magnetism": "seafoam", "Electricity": "sunshine", "Heat": "coral", "Fluids and pressure": "green",
+};
+const ACTIVITY_ART = {
+  slope: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M12 58h76M19 54l52-34" stroke-width="3"/><path class="line" d="M31 51l37-24" stroke-width="2" stroke-dasharray="4 5"/><g class="moving"><circle cx="54" cy="33" r="7" fill="currentColor"/><path class="line ink" d="M54 33l11-5" stroke-width="2"/></g><path class="line ink" d="M64 24l4 4-6 1" stroke-width="2"/></svg>`,
+  jump: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line trace" d="M15 54Q48 2 84 54" stroke-width="2.5"/><path class="line ink" d="M12 56h78" stroke-width="2"/><circle class="moving" cx="48" cy="25" r="7" fill="currentColor"/><path class="line" d="M18 48v8m64-8v8" stroke-width="2"/></svg>`,
+  drop: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M28 10v48M19 58h18" stroke-width="2.5"/><path class="line trace" d="M50 12v31" stroke-width="2"/><path class="line" d="M45 38l5 7 5-7" stroke-width="2.5"/><g class="moving"><rect x="61" y="12" width="17" height="22" rx="3" fill="currentColor"/><path d="M65 17h9" stroke="#fffefa" stroke-width="2"/></g><path class="line" d="M59 55h21" stroke-width="2"/></svg>`,
+  lift: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M25 10v49h50V10M36 58V23h28v35" stroke-width="2.5"/><path class="line" d="M50 15v7m-4-4 4-4 4 4" stroke-width="2"/><circle cx="50" cy="33" r="4" fill="currentColor"/><path class="line ink" d="M50 37v11m-6-5 6-4 6 4m-6 5-4 7m4-7 4 7" stroke-width="2"/></svg>`,
+  pendulum: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line" d="M18 57A39 39 0 0 1 82 57" stroke-width="2" stroke-dasharray="4 5"/><path class="line ink" d="M50 10v6" stroke-width="3"/><g class="swing"><path class="line ink" d="M50 15l21 32" stroke-width="2.5"/><circle cx="71" cy="47" r="7" fill="currentColor"/></g><circle cx="50" cy="14" r="3" fill="#1d4034"/></svg>`,
+  gate: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M24 15v43m52-43v43M18 58h64" stroke-width="2.5"/><path class="line trace" d="M50 15l14 30" stroke-width="2"/><circle class="moving" cx="64" cy="45" r="6" fill="currentColor"/><path class="line" d="M30 22h40" stroke-width="2" stroke-dasharray="3 5"/></svg>`,
+  spin: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><ellipse class="line trace" cx="50" cy="37" rx="34" ry="17" stroke-width="2"/><circle cx="50" cy="37" r="5" fill="#1d4034"/><g class="moving"><circle cx="81" cy="31" r="7" fill="currentColor"/><path class="line ink" d="M78 20l5 4-1-6" stroke-width="2"/></g><path class="line" d="M19 31l5-5m57 28 5-5" stroke-width="2"/></svg>`,
+  reaction: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><rect x="32" y="8" width="20" height="52" rx="3" fill="currentColor"/><path d="M38 17h10m-10 8h6m-6 8h10m-10 8h6m-6 8h10" stroke="#fffefa" stroke-width="2"/><path class="line ink" d="M65 17v34m-5-7 5 7 5-7" stroke-width="2.5"/><circle class="moving" cx="72" cy="18" r="5" fill="#e88770"/></svg>`,
+  run: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line trace" d="M13 18h20M8 29h15M17 40h18" stroke-width="2"/><path d="M37 47c8-1 13-9 19-9 5 0 8 6 13 8l12 4c4 1 6 4 6 7H35c-4 0-5-5-1-8z" fill="currentColor"/><path class="line ink" d="M45 52h15m-4-9 8 6" stroke-width="2"/></svg>`,
+  magnet: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line" d="M20 20v17a30 30 0 0 0 60 0V20M29 20v17a21 21 0 0 0 42 0V20M38 20v17a12 12 0 0 0 24 0V20" stroke-width="2"/><path d="M20 12h16v13H20zm44 0h16v13H64z" fill="currentColor"/><path d="M20 12h16m28 0h16" stroke="#fffefa" stroke-width="2"/></svg>`,
+  sound: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M12 35h9l7-13 9 27 9-37 9 46 9-36 8 22 7-9h9" stroke-width="2.5"/><path class="line trace" d="M18 57h64" stroke-width="1.5"/></svg>`,
+  beats: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line" d="M10 35q8-24 16 0t16 0 16 0 16 0 16 0" stroke-width="2.5"/><path class="line ink" d="M10 35q8-12 16 0t16 0 16 0 16 0 16 0" stroke-width="2"/><path class="line" d="M20 58h60" stroke-width="1.5" stroke-dasharray="3 5"/></svg>`,
+  echo: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line" d="M18 29q12 6 0 12m8-20q21 14 0 28m9-35q29 21 0 42" stroke-width="2"/><path class="line ink" d="M75 12v46" stroke-width="4"/><path class="line trace" d="M43 35h26m-7-6 7 6-7 6" stroke-width="2.5"/></svg>`,
+  light: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><circle cx="24" cy="35" r="9" fill="currentColor"/><path class="line" d="M24 13v-6m0 56v-6M2 35h8m28 0h8M9 20l6 6m18 18 6 6m0-30-6 6m-18 18-6 6" stroke-width="2.5"/><path class="line trace" d="M45 35h42m-8-7 8 7-8 7m-34-18 28-8m-28 36 28 8" stroke-width="2"/></svg>`,
+  wifi: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line" d="M18 28q32-28 64 0M27 38q23-20 46 0M37 48q13-12 26 0" stroke-width="3"/><circle cx="50" cy="57" r="4" fill="currentColor"/><path class="line ink" d="M15 58h70" stroke-width="1.5" stroke-dasharray="3 5"/></svg>`,
+  charge: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><rect x="27" y="15" width="46" height="42" rx="7" fill="none" stroke="#1d4034" stroke-width="2.5"/><path d="M73 27h5v18h-5" fill="none" stroke="#1d4034" stroke-width="2.5"/><path d="M54 21 39 39h10l-4 13 17-21H51z" fill="currentColor"/><path class="line trace" d="M16 35h7m61 0h7" stroke-width="2"/></svg>`,
+  cool: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><rect x="26" y="12" width="15" height="42" rx="7.5" fill="none" stroke="#1d4034" stroke-width="2.5"/><circle cx="33.5" cy="52" r="7" fill="currentColor"/><path class="line" d="M34 46V23" stroke-width="4"/><path class="line trace" d="M56 25q7-8 14 0t14 0m-28 14q7-8 14 0t14 0m-28 14q7-8 14 0t14 0" stroke-width="2.5"/></svg>`,
+  stairs: `<svg class="art" viewBox="0 0 100 70" aria-hidden="true"><path class="line ink" d="M13 57h20V46h18V35h18V24h18" stroke-width="3"/><circle cx="64" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="2.5"/><path class="line" d="M64 16l5-5m-5 5-4 3" stroke-width="2"/><path class="line trace" d="M22 18v12m-5-5 5 5 5-5" stroke-width="2"/></svg>`,
+};
 
 function missing(a) { return a.needs.filter((n) => !Hub.has(n)); }
 function renderHome() {
   $("coverage").textContent = `${ACTS.length} activities across 8 of the 9 areas of high-school physics: mechanics, energy (in Jump), magnetism, waves and sound, light and electromagnetic waves, electricity, heat, fluids and pressure.`;
-  $("areas").innerHTML = AREAS.map((ar) => `<div class="area${ACTS.filter((a) => a.area === ar).length === 1 ? " one" : ""}"><h3>${ar}</h3><div class="acts">${ACTS.filter((a) => a.area === ar).map((a) => {
+  $("areas").innerHTML = AREAS.map((ar) => {
+    const items = ACTS.filter((a) => a.area === ar);
+    const size = items.length === 1 ? " one" : items.length >= 3 ? " wide" : "";
+    return `<div class="area${size} tone-${AREA_TONES[ar]}"><h3>${ar}<span class="area-count">${items.length}</span></h3><div class="acts">${items.map((a) => {
     const miss = missing(a);
     const tag = miss.length ? (Hub.mode === "native" ? `This phone has no ${SENSOR_NAMES[miss[0]]}` : `Needs the ${SENSOR_NAMES[miss[0]]}${APP_ONLY.includes(miss[0]) ? " (Android app)" : ""}`) : a.needs.map((n) => SENSOR_NAMES[n]).join(" + ");
-    return `<button class="act${miss.length ? " off" : ""}" data-go="${a.id}"><b>${a.title}</b><span>${a.hook}</span><small>${tag}</small></button>`;
-  }).join("")}</div></div>`).join("");
+    return `<button class="act${miss.length ? " off" : ""}" data-go="${a.id}"><span class="art-box">${ACTIVITY_ART[a.id]}</span><b>${a.title}</b><span>${a.hook}</span><small>${tag}</small></button>`;
+  }).join("")}</div></div>`;
+  }).join("");
 }
 $("areas").addEventListener("click", (e) => { const b = e.target.closest("[data-go]"); if (b) location.hash = b.dataset.go; });
 $("back").addEventListener("click", () => { if (history.length > 1 && location.hash) history.back(); else location.hash = ""; });
